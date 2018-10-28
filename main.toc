@@ -1,0 +1,55 @@
+\select@language {english}
+\contentsline {section}{\numberline {1}System Identification}{2}{section.1}
+\contentsline {section}{\numberline {2}Definitions}{2}{section.2}
+\contentsline {section}{\numberline {3}Frequency Domain Methods}{2}{section.3}
+\contentsline {subsection}{\numberline {3.1}Sampling Operation}{2}{subsection.3.1}
+\contentsline {subsection}{\numberline {3.2}Fourier Series of Periodic Signals}{2}{subsection.3.2}
+\contentsline {section}{\numberline {4}Spectral Estimation}{2}{section.4}
+\contentsline {subsection}{\numberline {4.1}Sinusoidal correlation methods}{2}{subsection.4.1}
+\contentsline {section}{\numberline {5}Frequency Domain Methods}{3}{section.5}
+\contentsline {subsection}{\numberline {5.1}Finite Energy Signal}{3}{subsection.5.1}
+\contentsline {subsubsection}{\numberline {5.1.1}Energy Spectral Density (Finite Energy Signal)}{3}{subsubsection.5.1.1}
+\contentsline {subsubsection}{\numberline {5.1.2}Autocorrelation (Finite Energy Signal)}{3}{subsubsection.5.1.2}
+\contentsline {subsection}{\numberline {5.2}Discrete Periodic Signal}{3}{subsection.5.2}
+\contentsline {subsubsection}{\numberline {5.2.1}Discrete Fourier Series (Discrete Periodic Signal)}{4}{subsubsection.5.2.1}
+\contentsline {subsubsection}{\numberline {5.2.2}Autocorrelation (Discrete Periodic Signal)}{4}{subsubsection.5.2.2}
+\contentsline {subsubsection}{\numberline {5.2.3}Cross-Correlation (Discrete Periodic Signal)}{4}{subsubsection.5.2.3}
+\contentsline {subsection}{\numberline {5.3}Random Signal}{4}{subsection.5.3}
+\contentsline {subsubsection}{\numberline {5.3.1}Autocovariance (Random Signal)}{4}{subsubsection.5.3.1}
+\contentsline {subsubsection}{\numberline {5.3.2}Power Spectral Density (Random Signal)}{4}{subsubsection.5.3.2}
+\contentsline {subsubsection}{\numberline {5.3.3}Cross-Covariance (Random Signal)}{4}{subsubsection.5.3.3}
+\contentsline {subsubsection}{\numberline {5.3.4}Cross Power Spectral Density (Random Signal)}{5}{subsubsection.5.3.4}
+\contentsline {subsection}{\numberline {5.4}Finite Length Signal}{5}{subsection.5.4}
+\contentsline {subsubsection}{\numberline {5.4.1}Discrete-Fourier Transform (Finite Length Signal)}{5}{subsubsection.5.4.1}
+\contentsline {subsubsection}{\numberline {5.4.2}Periodogram (Finite Length Signal)}{5}{subsubsection.5.4.2}
+\contentsline {section}{\numberline {6}ETFE}{5}{section.6}
+\contentsline {subsection}{\numberline {6.1}Input-output relationship}{5}{subsection.6.1}
+\contentsline {subsection}{\numberline {6.2}Periodic input case}{6}{subsection.6.2}
+\contentsline {subsection}{\numberline {6.3}Spectral Transformations}{6}{subsection.6.3}
+\contentsline {subsubsection}{\numberline {6.3.1}Spectral estimation for periodic signals}{7}{subsubsection.6.3.1}
+\contentsline {subsubsection}{\numberline {6.3.2}Spectral estimation (more general case)}{7}{subsubsection.6.3.2}
+\contentsline {section}{\numberline {7}Averaging and Smoothing}{7}{section.7}
+\contentsline {subsection}{\numberline {7.1}Bias-variance trade-offs in data record splitting}{8}{subsection.7.1}
+\contentsline {subsection}{\numberline {7.2}Smoothing the ETFE}{8}{subsection.7.2}
+\contentsline {subsubsection}{\numberline {7.2.1}Assumptions on $\phi _v(e^{j\omega })$}{8}{subsubsection.7.2.1}
+\contentsline {subsubsection}{\numberline {7.2.2}Characteristic windows}{8}{subsubsection.7.2.2}
+\contentsline {subsubsection}{\numberline {7.2.3}Asymptotic bias properties}{9}{subsubsection.7.2.3}
+\contentsline {subsubsection}{\numberline {7.2.4}Asymptotic variance properties}{9}{subsubsection.7.2.4}
+\contentsline {subsubsection}{\numberline {7.2.5}Asymptotic MSE properties}{9}{subsubsection.7.2.5}
+\contentsline {section}{\numberline {8}Windowing and Input Signals}{9}{section.8}
+\contentsline {subsection}{\numberline {8.1}Time domain windows}{9}{subsection.8.1}
+\contentsline {subsubsection}{\numberline {8.1.1}Window characteristics}{10}{subsubsection.8.1.1}
+\contentsline {subsection}{\numberline {8.2}Input Signals}{10}{subsection.8.2}
+\contentsline {subsubsection}{\numberline {8.2.1}PRBS}{10}{subsubsection.8.2.1}
+\contentsline {subsubsection}{\numberline {8.2.2}Multi-sinusoidal signals}{10}{subsubsection.8.2.2}
+\contentsline {section}{\numberline {9}Residual Spectra, Coherency, Aperiodicty, Offsets and Drifts}{11}{section.9}
+\contentsline {subsection}{\numberline {9.1}Residual Spectrum}{11}{subsection.9.1}
+\contentsline {subsubsection}{\numberline {9.1.1}Estimating $\phi _ve^{(j\omega _n})$}{11}{subsubsection.9.1.1}
+\contentsline {subsection}{\numberline {9.2}Time-domain data windowing}{11}{subsection.9.2}
+\contentsline {subsubsection}{\numberline {9.2.1}Welch's Method}{11}{subsubsection.9.2.1}
+\contentsline {section}{\numberline {10}Frequency Domain Subspace ID}{11}{section.10}
+\contentsline {section}{\numberline {11}Closed-Loop ID}{11}{section.11}
+\contentsline {section}{\numberline {12}Time-Domain Correlation Method}{11}{section.12}
+\contentsline {section}{\numberline {13}Prediction Error Methods}{11}{section.13}
+\contentsline {section}{\numberline {14}Parameter estimation statistics}{11}{section.14}
+\contentsline {section}{\numberline {15}Nomenclature}{11}{section.15}
