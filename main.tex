@@ -521,9 +521,19 @@ Thus
 
 A fix for getting rid of the influence of the transient response: Get rid of the first period.
 
-%\begin{TPMatlab}
-%U_av = Averaging(u,N,n_periods,loose_transient);
-%\end{TPMatlab}
+\begin{TPMatlab}
+r = 4;
+N_split = N/r;
+u_re = reshape(u(N_split+1:end),N_split,[]);
+y_re = reshape(y(N_split+1:end),N_split,[]);
+
+U_re = fft(u_re);
+Y_re = fft(y_re);
+
+G_re = Y_re./U_re;
+
+G_avg = mean(G_re,2);
+\end{TPMatlab}
 
 \subsection{Spectral Transformations}
 
@@ -574,16 +584,19 @@ The autocovariance of the noise for stochastic $v(k)$ is described as:
 \frac{1}{N-|\tau|}\sum\limits_{k=0}^{N+\tau-1}v(k)v(k-\tau),&\text{for }\tau<0
 \end{cases}$}
 
-This is an unbiased estimator of $R_v(\tau)$: $E\{\hat{R}_v(\tau)=R_v(\tau)\}$
+This is an unbiased estimator of $R_v(\tau)$: $\expe{\hat{R}_v(\tau)}=R_v(\tau)$
 
 \important{$\hat{\phi}_v\ejon=\sum\limits_{\tau=-N+1}^{N-1}\hat{R}_v(\tau)e^{-j\omega \tau}$}
 
-Thus the spectral estimate is:
-
-\mportant{$\hat{\phi}_v\ejo = \sum\limits_{\tau = -N+1}^{N-1}\hat{R}_v(\tau)e^{-j\omega\tau}$}
-
 \begin{TPMatlab}
 xcorr(a-mean(a))-xcov(a) == 0 %true
+\end{TPMatlab}
+
+The functions above both calculate the zero-mean shifted autocorrelation of a signal which is \textbf{not} equivalent to the autocovariance of the signal! They lack the normalization by $N-|\tau|$!
+
+\begin{TPMatlab}
+Covariance('zero-mean',a);
+Covariance('zero-mean',a,b);
 \end{TPMatlab}
 
 \subsubsection{Spectral estimation (periodic signals)}
