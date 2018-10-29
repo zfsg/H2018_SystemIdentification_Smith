@@ -15,7 +15,7 @@
 \newtheorem{define}{Definition}
 
 %additional commands
-\newcommand{\ejon}{e^{(j\omega_n})}
+\newcommand{\ejon}{(e^{j\omega_n})}
 \newcommand{\ejo}{(e^{j\omega})}
 \newcommand{\ejzw}{(e^{j(\zeta-\omega_n)})}
 \newcommand{\ejz}{(e^{j\zeta})}
@@ -77,6 +77,18 @@ The highest frequency $\omega_u=\omega_{M/2}=\frac{\pi}{T}$ is called the \textb
 \end{define}
 
 \myspic{0.5}{NyquistFrequency}
+
+\begin{TPMatlab}
+%Non negative frequency vector
+omega = omega_n(N,'p0');
+%Discrete Fourier Transform
+fft(u); %Matlab
+DFT(u); %Lecture
+\end{TPMatlab}
+
+\begin{tiny}
+Note that the definition of the fft in the Matlab documentation does not describe the actual implementation perfectly. The index actually runs from 0 to $N-1$ as in the definition made in class.
+\end{tiny}
 
 \section{Spectral Estimation}
 
@@ -164,18 +176,23 @@ The transfer function can be estimated via:
 %
 %\textbf{Signal properties of interest}
 %
-\begin{itemize}
-\item Autocorrelation
-\item Crosscorrelation
-\item Frequency domain representation
-\item Spectral density (energy or power)
-\end{itemize}
+%\begin{itemize}
+%\item Autocorrelation
+%\item Crosscorrelation
+%\item Frequency domain representation
+%\item Spectral density (energy or power)
+%\end{itemize}
 
 \mportname{Discrete-time domain signal}{$x(k),\ k=-\infty,\ldots,\infty$}
 
 \importname{Fourier Transform}{$X\ejo=\sum\limits_{k=-\infty}^{\infty}x(k)e^{-j\omega k}$}
 
-\importname{Inverse Fourier Transform}{$x(k)=\frac{1}{2\pi}\int_{-pi}{\pi}X\ejo e^{j\omega k}d\omega$}
+\begin{itemize}
+\item $X\ejo$ is $2\pi$ periodic.
+\item If $\sum\limits_{k=-\infty}^\infty|x(k)|<\infty$ then $X\ejo$ converges.
+\end{itemize}
+
+\importname{Inverse Fourier Transform}{$x(k)=\frac{1}{2\pi}\int_{-\pi}^{\pi}X\ejo e^{j\omega k}d\omega$}
 
 where $k=-\infty,\ldots,\infty$
 
@@ -199,9 +216,15 @@ The spectral density is the Fourier Transform of the autocorrelation:
 
 \mportant{$\sum\limits_{\tau=-\infty}^{\infty}R_x(\tau)e^{-j\omega\tau}=S_x\ejo$}
 
-\importname{Autocorrelation}{xcorr(u)}
+\begin{TPMatlab}
+% autocorrelation for a non-periodic, finite energy signal
+Correlation('finen',u); %Lecture
+xcorr(u); %Matlab
 
-\importname{Crosscorrelation}{xcorr(u,v)}
+% crosscorrelation for non-periodic, finite energy signals
+Correlation('finen',u,y); %Lecture
+xcorr(y,u); %Matlab
+\end{TPMatlab}
 
 \subsection{Discrete Periodic Signal}
 
@@ -215,6 +238,11 @@ The spectral density is the Fourier Transform of the autocorrelation:
 
 \mportant{$e^{jn\omega_0},\ n=0,1,\ldots,M/2$}
 \end{itemize}
+
+\begin{TPMatlab}
+u_period = sqrt(variance)*randn(N,1)+bias;
+u = repmat(u_period,periods,1);
+\end{TPMatlab}
 
 \subsubsection{Discrete Fourier Series (Discrete Periodic Signal)}
 
@@ -234,6 +262,10 @@ The energy in a single period is:
 
 \mportant{$\sum\limits_{k=0}^{N-1}|x(k)|^2=\sum\limits_{n=0}^{N-1}\phi_x(e^{j\omega_n})$}
 
+\begin{TPMatlab}
+Correlation('periodic',u);
+\end{TPMatlab}
+
 \subsubsection{Cross-Correlation (Discrete Periodic Signal)}
 
 \important{$R_{yu}(\tau)=\frac{1}{N}\sum\limits_{k=0}^{N-1}y(k)u(k-\tau)$}
@@ -242,13 +274,25 @@ The Fourier transform of $R_{yu}(\tau)$ is now defined as the \textbf{cross-spec
 
 \important{$\phi_{yu}(e^{j\omega_n})=\sum\limits_{\tau = 0}^{N-1}R_{yu}(\tau)e^{-j\omega_n\tau}) = \frac{1}{N}Y(e^{j\omega_n})U^\ast(e^{j\omega_n})$}
 
+\begin{TPMatlab}
+Correlation('periodic',u,y);
+\end{TPMatlab}
+
 \subsection{Random Signal}
 
 Normally distributed noise:
 
-\important{$e(k)\in\mathcal{N}(0,\lambda)\Rightarrow\begin{cases}\expe{e(k)}=0\text{ (zero mean)}\\\expe{|e(k)|^2}=\lambda\text{ (varianve)}\end{cases}$}
+\important{$e(k)\in\mathcal{N}(0,\lambda)\Rightarrow\begin{cases}\expe{e(k)}=0\text{ (zero mean)}\\\expe{|e(k)|^2}=\lambda\text{ (variance)}\end{cases}$}
 
 The $e(k)$ are independent and identically distributed (i.i.d.).
+
+\begin{TPMatlab}
+standard_deviation = 2;
+variance = standard_deviation^2;
+bias = 0;
+N = 1024;
+u = randn(N,1)*standard_deviation + bias;
+\end{TPMatlab}
 
 \subsubsection{Autocovariance (Random Signal)}
 
@@ -273,6 +317,9 @@ Further properties are
 \item $R_x(0)\geq |R_x(\tau)|\ \forall\tau>0$
 \end{itemize}
 
+\begin{TPMatlab}
+xcorr(u)/N; %Lecture 3.37
+\end{TPMatlab}
 
 \subsubsection{Power Spectral Density (Random Signal)}
 
@@ -291,6 +338,10 @@ Further properties are
 \item $\phi_x\ejo=\phi_x(e^{-j\omega})$ for all real-valued $x(k)$
 \end{itemize}
 
+\begin{TPMatlab}
+fft(xcorr(u)/N)) %Lecture 3.37 (?)
+\end{TPMatlab}
+
 \subsubsection{Cross-Covariance (Random Signal)}
 
 \important{$R_{yu}(\tau)=\expe{(y(k)-\expe{y(k)})(u(k-\tau)-\expe{u(k)}}$}
@@ -303,6 +354,10 @@ Joint stationarity is required to make the definition dependent on $\tau$ only.
 
 If $R_{yu}(\tau)=0$ for all $\tau$ then $y(k)$ and $u(k)$ are uncorrelated.
 
+\begin{TPMatlab}
+xcorr(u,y)/N; %Lecture 3.37 (?)
+\end{TPMatlab}
+
 \subsubsection{Cross Power Spectral Density (Random Signal)}
 
 \important{$\phi_{yu}\ejo=\sum\limits_{\tau=-\infty}^\infty R_{yu}(\tau)e^{-j\omega\tau},\ \omega\in[-\pi,\pi)$}
@@ -310,6 +365,10 @@ If $R_{yu}(\tau)=0$ for all $\tau$ then $y(k)$ and $u(k)$ are uncorrelated.
 The inverse is,
 
 \mportant{$R_{yu}(\tau)=\frac{1}{2\pi}\int_{-\pi}^\pi\phi_{yu}\ejo e^{j\omega\tau}d\omega$}
+
+\begin{TPMatlab}
+fft(xcorr(y,u)/N); %Lecture 3.37 (?)
+\end{TPMatlab}
 
 \subsection{Finite Length Signal}
 
@@ -423,7 +482,7 @@ Initial transient corrupts the measurement
 with the window function:
 
 \mportant{$W_{[0,N-1]}(k)=\begin{cases}
-1&\text{ if} 0\leq0<N\\
+1&\text{ if } 0\leq0<N\\
 0&\text{ otherwise}\end{cases}$}
 
 For all outputs up to time $k=N-1$
@@ -436,7 +495,7 @@ The input in negative time, which is present in a ideal periodic input, and miss
 
 \vspace{3ex}
 
-When using a periodic signal multiple times the resulting DFt does not contain more information, since in a periodic signal there are only a certain number of frequencies contained, but the energy in those frequencies increases!
+When using a periodic signal multiple times the resulting DFT does not contain more information, since in a periodic signal there are only a certain number of frequencies contained, but the energy in those frequencies increases!
 
 \textbf{Transient bias error:}
 
@@ -462,6 +521,10 @@ Thus
 
 A fix for getting rid of the influence of the transient response: Get rid of the first period.
 
+\begin{TPMatlab}
+u_av = Averaging(u,N,n_periods,loose_transient);
+\end{TPMatlab}
+
 \subsection{Spectral Transformations}
 
 If $v(k) = 0$
@@ -480,7 +543,7 @@ But this approach has no more phase information. For that reason use the cross s
 
 if $u(k)$ and $v(k)$ are uncorrelated.
 
-\importname{Spectral estimation}{$\frac{\hat{\phi}_{yu}\ejon}{\hat{\phi}_u\ejon}$}
+\importname{Spectral estimation methods}{$\hat{G}\ejo = \frac{\hat{\phi}_{yu}\ejon}{\hat{\phi}_u\ejon}$}
 
 where
 
@@ -488,11 +551,21 @@ where
 
 \mportant{$\phi_{yu}\ejon=G\ejon\phi_u\ejon$}
 
+\subsection{Approaches to spectral estimation}
+
+\subsubsection{Spectral estimation (Periodogram)}
+
 The periodogram is an asymptotically unbiased estimator of the spectrum given $\lim\limits_{n\rightarrow\infty}\frac{1}{N}\sum\limits_{\tau=-\N}^N|\tau R_v(\tau)|=0$
 
-\mportname{periodogram}{$\frac{1}{N}|V_N\ejon|^2$}
+\mportname{Periodogram}{$\frac{1}{N}|V_N\ejon|^2$}
 
 \important{$\lim\limits_{N\rightarrow\infty}E\left\{\frac{1}{N}|V_N\ejon|^2\right\}=\phi_v\ejon$}
+
+which is under the assumption
+
+\mportant{$\lim\limits_{N\rightarrow\infty}\frac{1}{N}\sum\limits_{\tau=-N}^{N}|\tau R_v(\tau)|=0$}
+
+\subsubsection{Spectral estimation (via covariances)}
 
 The autocovariance of the noise for stochastic $v(k)$ is described as:
 
@@ -509,7 +582,11 @@ Thus the spectral estimate is:
 
 \mportant{$\hat{\phi}_v\ejo = \sum\limits_{\tau = -N+1}^{N-1}\hat{R}_v(\tau)e^{-j\omega\tau}$}
 
-\subsubsection{Spectral estimation for periodic signals}
+\begin{TPMatlab}
+xcorr(a-mean(a))-xcov(a) == 0 %true
+\end{TPMatlab}
+
+\subsubsection{Spectral estimation (periodic signals)}
 
 Periodic signal $x(k)$ with period $M$, $N=mM$ for some integer $m$
 
@@ -518,6 +595,10 @@ Periodic signal $x(k)$ with period $M$, $N=mM$ for some integer $m$
 The power spectral density can be calculated and is equal to the periodogram:
 
 \important{$\phi_x\ejon=\sum\limits_{\tau = 0}^{M-1}R_x(\tau)e^{-j\omega_n\tau}=\frac{1}{M}\left|X_M\ejon\right|^2$}
+
+\begin{TPMatlab}
+Ru = Correlation('periodic',u);
+\end{TPMatlab}
 
 \subsubsection{Spectral estimation (more general case)}
 
@@ -534,6 +615,10 @@ Periodic $x(k)$: unbiased (exact) if $N=mM$
 Random $x(k)$ biased $\expe{\hat{R}_x(\tau)}=\frac{N-|\tau|}{N}R_x(\tau)$.
 
 asymptotically biased as $N\rightarrow\infty,\tau/N\rightarrow 0$
+
+\begin{TPMatlab}
+Ru = xcorr(u)/N;
+\end{TPMatlab}
 
 \section{Averaging and Smoothing}
 
@@ -738,6 +823,39 @@ Similarly the numerator approaches $\phi_{yu}$ as $N\rightarrow\infty$:
 
 For this reason the smoothed ETFE is equal to the smoothed spectral estimate for $N\rightarrow \infty$.
 
+\subsection{Frequency domain smoothing in matlab}
+
+\begin{TPMatlab}
+gamma = 80;
+U = fft(u); Y = fft(y);
+G_est = Y./U;
+G_est_smooth = G_est*0;
+
+[om,Wg] = WfHann(g,N);
+%shift to start at zero
+zidx = find(om == 0);
+omega = [om(zidx:N);om(1:zidx-1)];
+Wg = [Wg(zidx:N) Wg(1:zidx-1)];
+%variance weighting
+a = U.*conj(U);
+\end{TPMatlab}
+
+\begin{TPMatlab}
+for wn = 1:N
+	%reset normalization
+	Wnorm = 0;
+    for xi = 1:N
+    	%wrap window index
+        widx = mod(xi-wn,N)+1;
+        G_est_smooth(wn) = G_est_smooth(wn) +...
+            Wg(widx)*G_est(xi)*a(xi);
+        Wnorm = Wnorm + Wg(widx)*a(xi);
+    end
+    %weigh normalisation
+    G_est_smooth(wn) = G_est_smooth(wn)/Wnorm;
+end
+\end{TPMatlab}
+
 \subsection{Time domain windows}
 
 Define, via the inverse Fourier transform a time domain window:
@@ -761,6 +879,13 @@ The cross spectral estimate can also be formulated as a convolution in the frequ
 \important{$\tilde{\phi}_u\ejon=\sum\limits_{\tau=-\gamma}^\gamma \omega_\gamma(\tau)\hat{R}_u(\tau)e^{-j\tau\omega_n}$}
 
 \important{$\tilde{\phi}_{yu}\ejon=\sum\limits_{\tau=-\gamma}^\gamma \omega_\gamma(\tau)\hat{R}_{yu}(\tau)e^{-j\tau\omega_n}$}
+
+\subsubsection{Time domain smoothing in matlab}
+
+\begin{TPMatlab}
+gamma = 80;
+
+\end{TPMatlab}
 
 \subsubsection{Window characteristics}
 
@@ -919,5 +1044,4 @@ ADC&analog digital converter&\\
 \end{TDefinitionTable*}
 
 \end{multicols*}
-
 \end{document}
