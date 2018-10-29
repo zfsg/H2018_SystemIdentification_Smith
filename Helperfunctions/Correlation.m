@@ -1,6 +1,6 @@
 function [seq,lags] = Correlation(mode,seq1,seq2)
 %CORRELATION Calculate the correlation or autocorrelation of signals
-%   mode char defining the mode
+%   mode    string defining the mode
 %   seq1    Nx1 signal
 %   seq2    Nx1 signal
 %   seq     (2*N-1)x1 output sequence
