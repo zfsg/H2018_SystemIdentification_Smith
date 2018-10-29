@@ -884,7 +884,22 @@ The cross spectral estimate can also be formulated as a convolution in the frequ
 
 \begin{TPMatlab}
 gamma = 80;
+[~,Wg] = WtHann(gamma,N);
+R_u = xcorr(u,N/2)/N; %Lecture 3.37
+R_yu = xcorr(y,u,N/2)/N;
 
+omega = Omega_n(N);
+phi_u = zeros(size(omega));
+phi_yu = zeros(size(omega));
+
+tau = -g:g;
+ind = tau+N/2;
+for i = 1:N
+%Lecture 5.9 and 5.11
+    phi_u(i) = sum(Wg(tau+N/2).*R_u(ind).*exp(-1j.*tau.'.*omega(i)));
+    phi_yu(i) = sum(Wg(tau+N/2).*R_yu(ind).*exp(-1j*tau.'.*omega(i)));
+end
+G_est_smooth = phi_yu./phi_u;
 \end{TPMatlab}
 
 \subsubsection{Window characteristics}
@@ -934,12 +949,23 @@ Other properties:
 
 \begin{itemize}
 \item Equal energy at all frequencies.
-\item Autocorrelation zero except for $\tau=0$.
+\end{itemize}
+
+\subsubsection{PRBS in matlab}
+
+\begin{TPMatlab}
+signal_order = 8;
+singal_length = 2.^signal_order-1;
+u = idinput(signal_length,'PRBS');
+\end{TPMatlab}
+
+\begin{itemize}
+\item Note that \verb+idinput+ only allows the choice of the total length of the signal and derives the fitting signal order such that the signal is at least of that chosen length. A warning is made if the chosen signal length is not equivalent to the run length.
 \end{itemize}
 
 \subsubsection{Multi-sinusoidal signals}
 
-\mportant{$u(k)=\sum\limits_{s=1}^S\sqrt{2\alpha_s}\cos(\omega_skT+phi_s)$}
+\mportant{$u(k)=\sum\limits_{s=1}^S\sqrt{2\alpha_s}\cos(\omega_skT+\phi_s)$}
 
 where $T$ is the sampling period, $\omega_s=\frac{2\pi}{T_P}$, $\frac{T_P}{T}=N$, $S\leq\frac{N}{2}$.
 
@@ -959,7 +985,7 @@ Select the phases $\phi_s$ such that the minimize the peak amplitude:
 
 for equal power in each sinusoids:
 
-\mportant{$\alpha_s=1/S$ and $\phi_s=\frac{pi(s^2+s)}{S}$}
+\mportant{$\alpha_s=1/S$ and $\phi_s=\frac{\pi(s^2+s)}{S}$}
 
 \section{Residual Spectra, Coherency, Aperiodicty, Offsets and Drifts}
 
@@ -969,11 +995,11 @@ for equal power in each sinusoids:
 
 \mportant{$v(k)=y(k)-G\ejo u(k)$}
 
-\important{$\tilde{\phi}_v\ejon\approx\frac{1}{N}\frac{1}{2\pi}\int_{-\pi}^\pi W_\gamma\ejzw\left|Y_N\ejo-\tilde{G}\ejo U_N\ejo\right|^2d\zeta\approx \tilde{\phi}\ejon-\frac{\left|\tilde{\phi}_{yu}\ejon\right|^2}{\tilde{\phi}_u\ejon}$}
+\important{$\tilde{\phi}_v\ejon\approx\frac{1}{N}\frac{1}{2\pi}\int_{-\pi}^\pi W_\gamma\ejzw\left|Y_N\ejo-\tilde{G}\ejo U_N\ejo\right|^2d\zeta\approx \tilde{\phi}_y\ejon-\frac{\left|\tilde{\phi}_{yu}\ejon\right|^2}{\tilde{\phi}_u\ejon}$}
 
 How much energy is accounted for by the model? How much by noise?
 
-\mportant{$\phi_v = \phi_y(1-\frac{|\phi_{yu}|}{\phi_y\phi_u}$}
+\mportant{$\phi_v\ejon = \phi_y\ejon\left(1-\frac{|\phi_{yu}(\ejon)|^2}{\phi_y\ejon\phi_u\ejon}\right)$}
 
 \importname{Coherency Spectrum}{$\hat{\kappa}_{yu}\ejon=\sqrt{\frac{|\hat{\phi}_{yu}\ejon|^2}{\hat{\phi}_y\ejon\hat{\phi}_u\ejon}}$}
 
@@ -991,7 +1017,20 @@ Putting a time domain window directly on the data.
 
 often with $w_{data}(k)=w_\gamma(k-N/2)$ (shifted to middle). Typically $\gamma = N/2$ such that all of the data is used.
 
+\myspic{0.5}{TimeDomainWindowing}
+
+For an estimation of the periodogram \textbf{scaling is necessary!}
+
+\importname{Periodogram}{$\frac{1}{E_{scl}}\frac{1}{N} |U_w\ejon|^2\quad\text{where }E_{scl}=\frac{\sum\limits_{k=0}^{N-1}|w_{data}(k)u(k)|^2}{\sum\limits_{k=0}^{N-1}|u(k)|^2}\approx \frac{1}{N}\sum\limits_{k=0}^{N-1}|w_{data}(k)|^2$}
+
+\begin{itemize}
+\item Transients influence the periodogram of a sequence, since by the application of the DFT, the signal is assumed to be periodic. Thus even if a sinusoid is sampled - if the periodic extension does not represent the same sinusoid - the DFT will show a range of frequencies, instead of a single distinct one.
+\item Time-domain data windowing can help reducing the influence of transients.
+\end{itemize}
+
 \subsubsection{Welch's Method}
+
+\myspic{0.5}{Welch}
 
 \begin{enumerate}
 \item Split the data record into $L$ overlapping segments of length $N$.
@@ -1000,22 +1039,36 @@ often with $w_{data}(k)=w_\gamma(k-N/2)$ (shifted to middle). Typically $\gamma 
 \end{enumerate}
 
 \begin{itemize}
-\item Advantages
-\begin{itemize}
-\item Windowing can reduce transient response effects.
-\item Noise reduction from averaging and windowing.
-\item Variance error can be reduced.
-\end{itemize}
-\begin{itemize}
-\item Windowing can cause energy leakage to adjacent frequencies.
-\item Frequency resolution deteriorates.
-\item Bias error can be increased.
-\item Noise on $u_l(k)$ and $u_{l+1}$ is not uncorrelated.
-\end{itemize}
-\item Tips
-\begin{itemize}
+\item[+] Windowing can reduce transient response effects.
+\item[+] Noise reduction from averaging and windowing.
+\item[+] Variance error can be reduced.
+
+\item[-] Windowing can cause energy leakage to adjacent frequencies.
+\item[-] Frequency resolution deteriorates.
+\item[-] Bias error can be increased.
+\item[-] Noise on $u_l(k)$ and $u_{l+1}$ is not uncorrelated.
 \item Do not use \verb+welch()+, since it does not fit the definition here.
 \end{itemize}
+
+\subsubsection{Drifts and Offsets}
+
+\begin{itemize}
+\item Time domain windowing when an offset is present can lead to the introduction of additional frequencies close to zero, which is undesirable.
+\item Time domain windowing when a drift is present can lead to the introduction of additional frequencies close to the peak of the sampled sinusoid, which is undesirable as well.
+\item A possible solution is \textbf{preprocessing} the data via the assumption
+
+\mportant{$u_d(k)=u(k)-(alpha k+\beta)$}
+
+where $\alpha k+\beta$ is the best linear fit to $u(k)$.
+\end{itemize}
+
+\begin{TPMatlab}
+detrend(u);
+\end{TPMatlab}
+
+\begin{itemize}
+\item[+] \verb+detrend+ can completely remove the effect of drifts and offsets.
+\item[-] It must be applied carefully, since if no drift/offset is present or if it is detected wrongly, large errors can be introduced.
 \end{itemize}
 
 \section{Frequency Domain Subspace ID}
