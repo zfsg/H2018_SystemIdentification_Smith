@@ -1,4 +1,3 @@
-
 \documentclass[10pt,a4paper]{scrartcl}
 
 \usepackage[english]{babel}
@@ -206,7 +205,9 @@ If $x(k)$ is a finite energy signal,
 
 \importname{Energy Spectral Density}{$S_x\ejo=|X\ejo|^2$}
 
-\textbf{For all following calculations of the energy spectral density finiteness is assumed.}
+\begin{itemize}
+\item For finite energy signals the energy spectral density is easily calculated, for signals of infinite length and thus infinite energy however, this is not possible. For that reason the \textbf{power} spectral density is calculated instead!
+\end{itemize}
 
 \subsubsection{Autocorrelation (Finite Energy Signal)}
 
@@ -576,6 +577,7 @@ which is under the assumption
 \mportant{$\lim\limits_{N\rightarrow\infty}\frac{1}{N}\sum\limits_{\tau=-N}^{N}|\tau R_v(\tau)|=0$}
 
 \subsubsection{Spectral estimation (via covariances)}
+\label{sec:SpectralEstimationCovariance}
 
 The autocovariance of the noise for stochastic $v(k)$ is described as:
 
@@ -632,6 +634,10 @@ asymptotically biased as $N\rightarrow\infty,\tau/N\rightarrow 0$
 \begin{TPMatlab}
 Ru = xcorr(u)/N;
 \end{TPMatlab}
+
+\begin{itemize}
+\item The bias when estimating $R_x$ for a random signal has the form a triangular weighting across $\tau$. A scaling of the signal would remove the bias, which is effectively done by the spectral estimation for via covariances \ref{sec:SpectralEstimationCovariance}.
+\end{itemize}
 
 \section{Averaging and Smoothing}
 
@@ -962,6 +968,30 @@ Other properties:
 
 \begin{itemize}
 \item Equal energy at all frequencies.
+\item The maximum period of a PRBS signal can be found based on the discrete time dynamic system that generates the signal:
+
+\begin{align*}
+A &= \begin{bmatrix}
+1&0&0&0&0&1\\
+1&0&0&0&0&0\\
+0&1&0&0&0&0\\
+0&0&1&0&0&0\\
+0&0&0&1&0&0\\
+0&0&0&0&1&0
+\end{bmatrix}
+C &= \begin{bmatrix}
+0&0&0&0&0&2\gamma
+\end{bmatrix}\\
+z &= Ax(k)\\
+x(k+1) &= \text{mod}_2(z(k))\\
+y &= Cx(k)-\gamma
+\end{align*}
+
+where $\gamma$ is the amplitude of the signal.
+
+Now the maximum length period result from the idea that $x(k)$ and therefore the output $y(k)$ can only change so many times until it reaches a state it has already held before. From that point on, since the system is first order, the signal repeats. Thus in the longest case, all possible values contained in $x$ are taken exactly once. Thus the maximum periodic length is equal to the number of possible binary numbers with 6 bits, where 6 is the order of the PRBS signal.
+
+\importname{Maximum Length Period}{$2^6-1$}
 \end{itemize}
 
 \subsubsection{PRBS in matlab}
@@ -1085,6 +1115,315 @@ detrend(u);
 \end{itemize}
 
 \section{Frequency Domain Subspace ID}
+
+\begin{align*}
+x(k+1)&=Ax(k)+Bu(k)\qquad A\in\mathbb{R}^{n_x\times n_x}\\
+y(k)&=Cx(k)+Du(k)\qquad D\in\mathbb{R}^{n_y\times n_u}
+\end{align*}
+
+\mportname{Pulse response coefficients}{$g(k)=\begin{cases}0&k=0\\D&k=0\\CA^{k-1}&k>0\end{cases}$}
+
+\mportant{$G\ejon=\sum\limits_{k=0}^\infty g(k)e^{-j\omega k}\quad 0\leq \omega\leq\pi$}
+
+Given 
+
+\mportant{$G(n)=G\ejon+V\ejon,\quad n=0,\ldots,N/2$}
+
+Find 
+
+\mportant{$\hat{G}\ejon=\hat{C}\left(e^{j\omega}I-\hat{A}\right)^{-1}\hat{B}+\hat{D}$}
+
+such that
+
+\mportant{$\lim\limits_{N\rightarrow\infty}||\hat{G}\ejon-G\ejon||_\infty =0$}
+
+\importname{Extended observability}{$\mathcal{O}=\begin{bmatrix}
+C\\CA\\\vdots\\CA^{q-1}
+\end{bmatrix}\in\mathbb{R}^{n_yq\times n_x}$}
+
+rank($\mathcal{O}$) = $n_x$ for all $n_yq\geq n_x$
+
+\importname{Extended controllability}{$\mathcal{C}=\begin{bmatrix}
+B&AB&\cdots&A^{r-1}B
+\end{bmatrix}\in\mathbb{R}^{n_x\times n_ur}$}
+
+rank($\mathcal{C}$)=$n_x$ for all $n_u r\geq n_x$
+
+The ETFE matches the true transfer function only of there is no noise. In that case the inverse Fourier transform results in the time-aliased impulse response of the system $h_k$: 
+
+\important{$h_k=\frac{1}{N}\sum\limits_{n=0}^{N-1}G\ejon e^{j2\pi kn/N}=CA^{k-1}\left(\sum\limits_{l=0}^\infty A^{Nl}\right)B=CA^{k-1}\left(I-A^N\right)^{-1}B$}
+
+\begin{itemize}
+\item We do not get the exact impulse response $g(k)$ since we do not have all the data until $N\rightarrow\infty$.
+\end{itemize}
+
+Now the \textbf{Hankel matrix} is formulated with the ultimate goal to extract estimates of the state space matrices.
+
+\mportant{$H=\begin{bmatrix}
+h_1&h_2&h_3&\cdots&h_r\\
+h_2&h_3&\ddots&\ddots&h_{r+1}\\
+h_3&\ddots&\ddots&\ddots&\\
+&\ddots&\ddots&&\vdots\\
+h_q&h_{q+1}&&\cdots&h_{q+r-1}
+\end{bmatrix}\quad$ choose $q>n_x,r>n_x$ and $q+r-1\leq N-1$}
+
+which leads to:
+
+\important{$H=\begin{bmatrix}
+C\\CA\\\vdots\\CA^{q-1}
+\end{bmatrix}\left(I-A^N\right)^{-1}\begin{bmatrix}
+B&AB&\cdots&A^{r-1}B
+\end{bmatrix}$}
+
+Next singular value decomposition can be used to decompose the Hankel matrix, which allows to calculate the \textbf{rank} of the state space, as the dimension of $\Sigma_1$.
+
+\mportant{$H=U\Sigma V^T=\begin{bmatrix}
+U_1&U_2
+\end{bmatrix}\begin{bmatrix}
+\Sigma_1&0\\0&0
+\end{bmatrix}\begin{bmatrix}
+V_1^T\\V_2^T
+\end{bmatrix},\quad \Sigma_1\in\mathbb{R}^{n_x\times n_x}$}
+
+Since $U_2$ is multiplied with $\boldsymbol{0}$ the range($H$) = range($U_1$) = $\mathcal{O}$. Which directly leads to span($\{U_1\}$) = span($\mathcal{O}$), which means that the observability matrix is some linear transform of $U_1$. Or differently said, for some choice of $A$ they are equal. \textcolor{red}{probably not correct!?}
+
+\vspace{3ex}
+
+Next an estimate of $\hat{A}$ is made using the observability matrix, for which the selection matrix $J$ is introduced:
+
+\mportant{$J_1\begin{bmatrix}
+C\\CA\\\vdots\\CA^{q-1}
+\end{bmatrix}=\begin{bmatrix}
+C\\CA\\\vdots\\CA^{q-2}
+\end{bmatrix}$ and $J_2\begin{bmatrix}
+C\\CA\\\vdots\\CA^{q-1}
+\end{bmatrix}=\begin{bmatrix}
+CA\\\vdots\\CA^{q-1}
+\end{bmatrix}$}
+
+Then $j_1\mathcal{O}A=J_2\mathcal{O}$
+
+So $\hat{A}$ is the least squares solution to $J_1\hat{U}_1\hat{A}=J_2\hat{U}_1$.
+
+\vspace{3ex}
+
+And $\hat{C}$ can be found as: $J_e\mathcal{O}=C\Longrightarrow J_3\hat{U}_1=\hat{C}$.
+
+Next, using the initial formulation:
+
+\mportant{$\hat{G}\ejon=\hat{C}\left(e^{j\omega}I-\hat{A}\right)^{-1}\hat{B}+\hat{D}$}
+
+$\hat{B}$ and $\hat{D}$ can be found as the solution to the minimization:
+
+\important{$\hat{B},\hat{D}=\underset{B,D}{\text{argmin}}\sum\limits_{n=0}^N||G\ejon-D-\hat{C}(e^{j\omega_n}I-\hat{A})^{-1}B||_F^2$}
+
+\subsection{Summarizing the subspace identification algorithm}
+
+Uniform data spacing case:
+
+\mportant{$G(n),\quad \omega_n=\frac{\pi n}{N},\quad n=0,\ldots,N/2$}
+
+\begin{enumerate}
+\item Extend data to negative frequencies
+\mportant{$G(n)=\bar{G}(N-n),\quad n=N/2+1,\ldots,N-1$}
+\item Calculate inverse DFT to obtain the time-aliased pulse response
+\mportant{$\hat{h}_k=\frac{1}{N}\sum\limits_{n=0}^{N-1}G(n)e^{j 2\pi kn/N},\quad k=0,\ldots,N-1$}
+
+\item Form a block-Hakel matrix:
+
+\mportant{$\hat{H}=\begin{bmatrix}
+\hat{h}_1&\hat{h}_2&\hat{h}_3&\cdots\hat{h}_r\\
+\hat{h}_2&\hat{h}_3&\ddots&\ddots&\hat{h}_{r+1}\\
+\hat{h}_3&\ddots&\ddots&\ddots&\\
+&\ddots&\ddots&&\vdots\\
+\hat{h}_q&\hat{h}_{q+1}&&\cdots&\hat{h}_{q+r+1}
+\end{bmatrix}\in\mathbb{R}^{n_yq\times \nu_r}$}
+\item Calculate a singular value decomposition:
+
+\mportant{$\hat{H}=\hat{U}\hat{\Sigma}\hat{V}^T$}
+
+\item Select a model order, $\hat{n}_x$ and partition the SVD:
+
+\mportant{$\hat{U}\hat{\Sigma}\hat{V}^T=\begin{bmatrix}
+\hat{U}_1&\hat{U}_2
+\end{bmatrix}\begin{bmatrix}
+\hat{\Sigma}_1&0\\0&\hat{\Sigma}_2
+\end{bmatrix}\begin{bmatrix}
+\hat{V}_1^T\\\hat{V}_2^T
+\end{bmatrix},\quad \hat{\Sigma}\in\mathbb{R}^{\hat{n}_x\times\hat{n}_x}$}
+
+\item Estimate $\hat{A}$ via:
+\begin{align*}
+J_1&=\begin{bmatrix}
+I_{n_y(q-1)}&O_{n_y(q-1)\times n_y}
+\end{bmatrix}\\
+J_2&=\begin{bmatrix}
+0_{n_q(q-1)}\times n_y&I_{n_y(q-1)}
+\end{bmatrix}
+\end{align*}
+
+Solve for $\hat{A}$ via LS: 
+
+\important{$J_1\hat{U}_1\hat{A}=J_2\hat{U}_1$}
+
+\item Estimate $\hat{C}$ via
+
+\begin{align*}
+J_3&=\begin{bmatrix}
+I_{n_y}&0_{n_y\times n_y(q_1)}
+\end{bmatrix}
+\end{align*}
+
+\important{$\hat{C}=J_3\hat{U}_1$}
+
+\item Find $\hat{B}$ and $\hat{D}$ via least squares:
+
+\important{$\hat{B},\hat{D}=\underset{B,D}{\text{argmin}}\sum\limits_{n=0}^N||G\ejon-D-\hat{C}(e^{j\omega_n}I-\hat{A})^{-1}B||_F^2$}
+
+\item Form the estimate
+
+\important{$\hat{G}(z)=\hat{D}+\hat{C}(zI-\hat{A})^{-1}\hat{B}$}
+\end{enumerate}
+
+\begin{itemize}
+\item To get real valued $B$ and $D$:
+
+\mportant{$\begin{bmatrix}
+\text{real}\left((\hat{C}(\ejon I-\hat{A})^{-1}\right)&I\\\text{imag}\left((\hat{C}(\ejon I-\hat{A})^{-1}\right)&0
+\end{bmatrix}\begin{bmatrix}
+B\\D
+\end{bmatrix}=\begin{bmatrix}
+\text{real}(G(n))\\\text{imag}(G(n))
+\end{bmatrix}$}
+\end{itemize}
+
+\subsubsection{Properties}
+
+\begin{itemize}
+\item Asymptotic convergence
+
+\mportant{$\lim\limits_{N\rightarrow\infty}||\hat{G}\ejon- G\ejon||_\infty = 0,\quad n=0,\ldots,N-1$  w.p. 1}
+\item The algorithm is \glqq correct\grqq.
+If $V\ejon=0$ then there exists a data length $N_0<\infty$ such that:
+
+\mportant{$||\hat{G}_N\ejo-G\ejo||_\infty=0$ for all $N>N_0$}
+\end{itemize}
+
+\begin{itemize}
+\item[+] Time- and frequency-domain versions available. $N4SID$, etc
+\item[+] Many variants which depend on weighting for noise.
+\item[+] gives a state-space model directly.
+\item[+] Can be effective in determining system order.
+\item[+] Works equally well for MIMO systems.
+\item[-] Unusual noise weighting in frequency-domain case.
+\item[-] Truncated SVD reconstrutions are not Hankel.
+\item[-] $\hat{U}_1$ does not have the \glqq shift\grqq structure.
+\item[-] Least-squares noise assumptions are not correct.
+\item[-] Can give unstable models for stable systems.
+\end{itemize}
+
+\subsection{Nonuniformly spaced frequencies}
+
+Time domain
+
+\begin{align*}
+x(k+1)&=Ax(k)+Bu(k)\\
+y(k)&=Cx(k)+Du(k)
+\end{align*}
+
+Frequency domain
+
+\begin{align*}
+e^{j\omega}X(\omega)&=AX(\omega)+BU(\omega)\\
+Y(\omega)&=CX(\omega)+BU(\omega)
+\end{align*}
+
+For a specific frequency $\omega$ on each channel
+
+\mportant{$U_i(\omega)=e_i\quad i=1,\ldots n_u$}
+
+Resulting system equations
+
+\begin{align*}
+e^{j\omega}X_i(\omega)&=AX_i(\omega)+BU_i(\omega)\\
+Y_i(\omega)&=CX_i(\omega)+DU_i(\omega)
+\end{align*}
+
+Defining
+
+\mportant{$X_c(\omega)=\begin{bmatrix}
+X_1(\omega)&\cdots&X_{n_u}(\omega)
+\end{bmatrix}$}
+
+and stacking the equations column-wise gives:
+
+\begin{align*}
+e^{j\omega}X_c(\omega)&=AX_c(\omega)+B\\
+G(\omega)&=CX_c(\omega)+D
+\end{align*}
+
+Multiplying by $e^{j\omega}$ and substituting, repeating and stacking row-wise:
+
+\mportant{$\begin{bmatrix}
+G\ejo\\e^{j\omega}G\ejo\\\vdots\\e^{j(q-1)\omega}G\ejo
+\end{bmatrix}=\begin{bmatrix}
+C\\CA\\\vdots\\CA^{q-1}
+\end{bmatrix}X_c(\omega)+\Gamma\begin{bmatrix}
+I_{n_u}\\e^{j\omega}I_{n_u}\\\vdots\\e^{j(q-1)\omega}I_{n_u}
+\end{bmatrix}$}
+
+where
+
+\mportant{$\Gamma=\begin{bmatrix}
+D&&&\\
+CB&D&0&0\\
+CAB&\ddots&\ddots&&\\
+\vdots&&\ddots&\\
+CA^{q-2}B&\cdots&CB&D
+\end{bmatrix}$}
+
+Repeat for all frequencies $\omega_i$:
+
+\newcommand{\Gejon}[1]{G(e^{j\omega_{#1}})}
+\begin{align*}
+\mathcal{G}&=\frac{1}{\sqrt{N}}\begin{bmatrix}
+\Gejon{1}&\cdots&\Gejon{N}\\
+e^{j\omega_1}\Gejon{1}&&e^{j\omega_N}\Gejon{N}\\
+\vdots&&\vdots\\
+e^{j(q-1)\omega_1}\Gejon{1}&\cdots&e^{j(q-1)\omega_N}\Gejon{N}
+\end{bmatrix}\\
+\mathcal{W}&=\frac{1}{\sqrt{N}}\begin{bmatrix}
+I&\cdots&I\\
+e^{j\omega_1}&&e^{j\omega_N}I\\
+\vdots&&\vdots\\
+e^{j(q-1)\omega_1}&\cdots&e^{j(q-1)\omega_N}I
+\end{bmatrix}\\
+\mathcal{X}_c&=\frac{1}{\sqrt{N}}\begin{bmatrix}
+X_c(\omega_1)\cdots&X_c(\omega_N)
+\end{bmatrix}
+\end{align*}
+
+\important{$g=\mathcal{O}\mathcal{X}_c+\Gamma\mathcal{W}$}
+
+Now as $\mathcal{O}$ and $\Gamma$ are real valued
+
+\mportant{$\underbrace{\begin{bmatrix}
+\text{real}(\mathcal{G})&\text{imag}(\mathcal{G})
+\end{bmatrix}}_{\mathcal{G}_r}=\mathcal{O}\underbrace{\begin{bmatrix}
+\text{real}(\mathcal{X}_c)&\text{imag}(\mathcal{X}_c)
+\end{bmatrix}}_{\mathcal{X}_{cr}}+\Gamma\underbrace{\begin{bmatrix}\text{real}(\mathcal{W})&\text{imag}(\mathcal{W})\end{bmatrix}}_{\mathcal{W}_r}$}
+
+If $n_yq<n_ur$ then $\exists\mathcal{W}_r^\perp$ such that $\mathcal{W}_r\mathcal{W}_r^\perp$.
+
+\mportant{$\mathcal{G}_r\mathcal{W}_r^\perp=(\mathcal{O}\mathcal{X}_{rc}+\Gamma\mathcal{W}_r)\mathcal{W}_r^\perp=\mathcal{O}\mathcal{X}_{cr}\mathcal{W}_r^\perp$}
+
+\mportant{$\text{range}\left(\mathcal{G}_r\mathcal{W}_r^\perp\right)=\text{range}(\mathcal{O})$}
+
+\begin{TPMatlab}
+%To solve linear least squares problem: Ax = b
+x = A\b;
+\end{TPMatlab}
+
 
 \section{Closed-Loop ID}
 
