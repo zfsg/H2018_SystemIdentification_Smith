@@ -9,7 +9,11 @@
 \parindent 0pt
 
 \title{System Identification}
-\author{GianAndrea Müller}
+\author{
+GianAndrea Müller\\
+\and
+Stefan Rickli
+}
 
 \newtheorem{define}{Definition}
 
@@ -911,7 +915,7 @@ omega = Omega_n(N);
 phi_u = zeros(size(omega));
 phi_yu = zeros(size(omega));
 
-tau = -g:g;
+tau = -gamma:gamma;
 ind = tau+N/2;
 for i = 1:N
 %Lecture 5.9 and 5.11
