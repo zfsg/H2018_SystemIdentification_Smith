@@ -1449,4 +1449,108 @@ ADC&analog digital converter&\\
 \end{TDefinitionTable*}
 
 \end{multicols*}
+
+\section{Overviews}
+\subsection{Transfer Functions}
+
+\def\myblockwidth{0.225\paperwidth}
+\def\myimagewidth{0.8\linewidth}
+
+\footnotesize
+\begin{tabular}{|p{\myblockwidth}|p{\myblockwidth}|p{\myblockwidth}|p{\myblockwidth}|}
+\hline
+\begin{center}
+
+\underline{\textbf{Nonperiodic Time Domain Signal}}
+
+\textcolor{gray}{
+\mportant{$x[n]=\int_0^1\hat{x}(\theta)e^{2\pi i n\theta}d\theta$}
+}
+
+\vspace{0.4cm}
+
+\mportant{$x(k)=\frac{1}{2\pi}\int_{-\pi}^\pi X\ejo e^{j\omega k}d\omega$}
+
+\vspace{0.2cm}
+
+\includegraphics[width=\myimagewidth]{Pictures/FiniteEnergyTimeSignal.pdf}
+\end{center}
+&
+\begin{center}
+
+\underline{\textbf{Discrete Time Fourier Transform (DTFT)}}
+
+\textcolor{gray}{\mportant{$\hat{x}(\theta)=\sum\limits_{n=-\infty}^\infty x[n]e^{-2\pi in\theta}$}}
+
+\mportant{$X(\omega)=\sum\limits_{k=-\infty}^\infty x(k)e^{-j\omega k}$}
+
+\includegraphics[width=\myimagewidth]{Pictures/DTFTFiniteEnergySignal.pdf}
+\end{center}
+&
+\begin{center}
+\underline{\textbf{Energy Spectral Density}}
+
+\vspace{1.5cm}
+
+\mportant{$S_x(\omega)=|X(\omega)|^2=\sum\limits_{\tau=-\infty}^\infty R_x(\tau)e^{-j\omega \tau}$}
+
+\includegraphics[width=\myimagewidth]{Pictures/EnergySpectralDensityFromNonPeriodicAutocorrelation.pdf}
+\end{center}
+&
+\begin{center}
+\underline{\textbf{Nonperiodic Autocorrelation}}
+
+\vspace{1.5cm}
+
+\mportant{$R_x(\tau)=\sum\limits_{k=-\infty}^\infty x(k)x(k-\tau)$}
+\includegraphics[width=\myimagewidth]{Pictures/NonPeriodicAutocorrelation.pdf}
+\end{center}\\\hline
+
+\begin{center}
+\underline{\textbf{Periodic Time Domain Signal}}
+
+\textcolor{gray}{\mportant{$x[n]=\frac{1}{N}\sum\limits_{k=0}^{N-1}\hat{x}[k]e^{2\pi in\frac{k}{N}}$}}
+
+\mportant{$x(k)=\frac{1}{N}\sum\limits_{n=0}^{N-1}X(\omega_n)e^{j\omega_n k},\ \omega_n = 2\pi\frac{n}{N}$}
+
+\includegraphics[width=\myimagewidth]{Pictures/PeriodicSignal.pdf}
+\end{center}
+&
+\begin{center}
+\underline{\textbf{Discrete Fourier Transform}}
+
+\textcolor{gray}{\mportant{$\hat{x}[k]=\sum\limits_{n=0}^{N-1}x[n]e^{-2\pi ik\frac{n}{N}}$}}
+
+\mportant{$X(\omega_n)=\sum\limits_{k=0}^{N-1}x(k)e^{-j\omega_n k},\ \omega_n=2\pi\frac{n}{N}$}
+\includegraphics[width=\myimagewidth]{Pictures/DFTPeriodicSignal.pdf}
+\end{center}
+&
+\begin{center}
+\underline{\textbf{Power Spectral Density (PSD)}}
+
+\vspace{1.5cm}
+
+\mportant{$\phi(\omega_n)=\frac{1}{N}|X(\omega_n)|^2=\sum\limits_{\tau =0}^{N-1}R_x(\tau)e^{-j\omega_n\tau}$}
+
+\includegraphics[width=\myimagewidth]{Pictures/PowerSpectralDensityFromDFT.pdf}
+\end{center}
+&
+\begin{center}
+\underline{\textbf{Periodic Autocorrelation}}
+
+\vspace{1.5cm}
+
+\mportant{$R_x(\tau)=\frac{1}{N}\sum\limits_{k=0}^{N-1}x(k)x(k-\tau)$}
+
+\includegraphics[width=\myimagewidth]{Pictures/PeriodicAutocorrelation.pdf}
+\end{center}\\\hline
+\end{tabular}
+\normalsize
+
+\newpage
+
+\subsection{Transfer Function Estimation}
+
+fill in coolness chart
+
 \end{document}
