@@ -1428,14 +1428,1087 @@ If $n_yq<n_ur$ then $\exists\mathcal{W}_r^\perp$ such that $\mathcal{W}_r\mathca
 x = A\b;
 \end{TPMatlab}
 
-
 \section{Closed-Loop ID}
 
-\section{Time-Domain Correlation Method}
+\myspic{0.5}{ClosedLoop}
+
+\begin{TDefinitionTable*}
+$r_1(k),r_2(k)$&Excitation\\
+$y(k),u(k),r_2(k),r_1(k)$&Measurements\\
+\end{TDefinitionTable*}
+
+\mportant{$r(k)=r_2(k)+C(z)r_1(k)$}
+
+\textbf{Motivation for closed-loop ID}
+
+\begin{itemize}
+\item Unstable systems must be operated in closed-loop.
+\item Operational constraints may require closed-loop.
+\item Closed-loop controller maintains the system close to the operating point.
+\item Easier to focus identification on specific operation points.
+\item Will emphasize plant dynamics close to the cross-over frequency range.
+\item Closed-loop operation can remove a large-scale zero-frequency response.
+\end{itemize}
+
+\textbf{Methods overview}
+
+\begin{enumerate}
+\item Direct (open-loop) methods:
+
+\mportant{$\hat{G}=\hat{Y}_N/\hat{U}_N$ or $\hat{G}=\hat{\phi}_{yu}/\hat{\phi}_u$}
+
+\item Indirect methods
+
+\mportant{$y=\frac{G(z)}{(1+G(z)C(z))}r$}
+
+\item Input-output methods:
+
+\mportant{$y=\frac{G(z)}{(1+G(z)C(z))}r$ and $u=\frac{1}{(1+G(z)C(z))}r$}
+
+\item Dual-Youla methods.
+\end{enumerate}
+
+\subsection{Direct Methods}
+
+\begin{align*}
+\hat{\phi}_{yu}\ejon&=\frac{1}{2\pi}\int_{-\pi}^\pi W_\gamma(\omega_n-\zeta)\frac{1}{N}Y_N\ejz\bar{U_N}\ejz d\zeta\\
+\hat{\phi}_u\ejon&=\frac{1}{2\pi}\int_{-\pi}^{\pi}W_\gamma(\omega_n-\zeta)\frac{1}{N}|U_N\ejz|^2d\zeta\\
+\hat{G}\ejon&=\frac{\hat{\phi}_{yu}\ejon}{\hat{\phi}_u\ejon}
+\end{align*}
+
+Closed loop transfer functions:
+
+\myspic{0.5}{ClosedLoop}
+
+\begin{align*}
+y &= v + G(r_2+C(r_1-y))\\
+y &= v + Gr_2+GCr_1-GCy\\
+y(1 + GC) &= v + Gr_2 + GCr_1\quad\text{where } S = \frac{1}{1+GC}\\
+y &= Sv + \underbrace{SGr_2 + SGCr_1}_{SGr}\quad\text{where } r = r_2 + Cr_1\\
+\end{align*}
+
+\sbss{
+\begin{align*}
+u &= r_2 + C(r_1-(Gu+v))\\
+u &= r_2 + Cr_1- CGu-Cv\\
+u+CG&= r_2+Cr_1-Cv\\
+u &= \underbrace{Sr_2 + SCr_1}_{Sr} - SCv
+\end{align*}
+}{
+\begin{align*}
+T_{yr}&=SG\\
+T_{ur} &= S
+\end{align*}
+}
+
+\begin{TPMatlab}
+Gdz = c2d(Gs,T_s,'zoh');
+Cdz = ...;
+Sdz = 1/(1+Gdz*Cdz);
+Tdz_y_r1 = 1-Sdz;
+Tdz_y_r = feedback(Gdz,Cdz);
+Tdz_y_r = Sdz*Gdz;
+T_u_r = Sdz;
+%Use minreal() to reduce the TF
+\end{TPMatlab}
+
+Further these identities can be shown if $r_2,v = 0$:
+
+\begin{TPMatlab}
+y = lsim(Tdz_y_r1,r_1,t);
+y = lsim(Tdz_y_r,lsim(Cdz,r_1,t),t);
+u = lsim(Sdz*Cdz,r_1,t);
+u = lsim(Sdz,lsim(Cdz,r_1,t),t);
+\end{TPMatlab}
+
+Assume that $\phi_{rv}=0$
+
+\begin{equation*}
+\hat{G}=\frac{\hat{\phi}_{yu}}{\hat{\phi}_u}\approx \frac{|S|^2G\hat{\phi}_r-|S|^2\bar{C}\hat{\phi}_v}{|S|^2\hat{\phi}_r+|S|^2|C|^2\hat{\phi}_v}\approx\frac{G\hat{\phi}_r-\bar{C}\hat{\phi}_v}{\hat{\phi}_r+|C|^2\hat{\phi}_v}
+\end{equation*}
+
+\begin{itemize}
+\item For system identification the used controller $C$ should be not the optimal one for the use case, since a good controller suppresses information \textcolor{red}{Find better explanation}.
+\item Reducing the excitation to zero will only deliver information on $C$.
+\end{itemize}
+
+\subsection{Input-Output Methods}
+
+\textbf{Identification problems:}
+
+If $\phi_{vr}=0$:
+
+\mportant{$\hat{T}_{yr}\ejon=\frac{Y_N\ejon}{R_N\ejon}$ (asymptotically unbiased)}
+
+\mportant{$\hat{T}_{ur}\ejon=\frac{U_n\ejon}{R_N\ejon}$ (asymptotically unbiased)}
+
+\textbf{Closed-loop identification approach:}
+
+\important{$\frac{T_{yr}}{T_{ur}}=\frac{SG}{S}=G\longrightarrow \hat{G}\ejon=\frac{\hat{T}_{yr}\ejon}{\hat{T}_{ur}\ejon}$}
+
+\begin{itemize}
+\item The estimates $\hat{T}_{yr}$ and $\hat{T}_{ur}$ may be unbiased. \textbf{Their ratio is not.}
+\item The estimated spectra are weighted by $S\ejon$ or $S\ejon C\ejon$.
+\item The noise enters in a complicated manner.
+\end{itemize}
+
+\subsubsection{Ratio distributions}
+
+Two normal substitutions $v\in\mathcal{N}(0,1)$ and $w\in\mathcal{N}(0,1)$.
+
+The ratio $z=v/w$ is a stochastic variable with PDF:
+
+\importname{Cauchy Distribution}{$f_z(z)=\frac{1}{\pi}\frac{1}{1+z^2}$}
+
+\begin{itemize}
+\item The variance of a Cauchy distribution is infinite.
+\end{itemize}
+
+\subsubsection{Averaging closed-loop estimates}
+
+\mportant{$U_l\ejon,Y_l\ejon$}
+
+\begin{align*}
+\tilde{G}\ejon&=\frac{1}{L}\sum\limits_{l=1}^L\left(\frac{Y_l\ejon}{U_l\ejon}\right)\\
+&\text{or}\\
+\tilde{G}\ejon&=\frac{\tilde{Y}\ejon}{\tilde{U}\ejon}
+\end{align*}
+
+\begin{itemize}
+\item Either top or below is correct which is frequency dependent. \textcolor{red}{Find better explanation}.
+\end{itemize}
+
+\subsection{Dual-Youla Methods}
+
+\subsubsection{Youla Parametrizations}
+
+\textbf{Coprime factorizations}
+
+\mportant{$G_0(s)=\frac{N_o(s)}{D_0(s)}$}
+
+with $N_0(s),D_0(s)$ stable and coprime (no common zeros). \textbf{Coprime factorizations are not unique}.
+
+\vspace{3ex}
+
+\textbf{Bezout identity}
+
+The transfer functions $N_0(s)$ and $D_0(s)$ are coprime iff there exists $U(s)$ and $V(s)$ such that
+
+\mportant{$U(s)N_0(s)+V(s)D_0(s) = I$}
+
+\textbf{Normalized Coprime Factorizations}
+
+A coprime factorization is normalized if
+
+\mportant{$D_0^\ast(s)D_0(s)+N_0^\ast(s)N_0(s)=I$}
+
+\begin{TPMatlab}
+sncfbal()
+\end{TPMatlab}
+
+\textbf{All stablizing controllers}
+
+If we have a controller $C_0$ which stablizes $G_0$ with
+
+\mportant{$C_0=\frac{X_0}{Y_0}$ ($X_0,Y_0$ a coprime factorization)}
+
+then, all controllers, $C$, stablizing $G_0=N_0/D_0$ have the form:
+
+\important{$C_Q=\frac{X_0+QD_0}{Y_0-QN_0}$, with $Q$ stable}
+
+\subsubsection{Dual-Youla methods}
+
+\textbf{Control design:}
+
+Given $G(s)$ select $C(s)$ form the set of controllers stabilizing $G(s)$.
+
+\textbf{Closed-loop identification:}
+
+Given a particular controller $C(s)$ select $G(s)$ from the set of all plants stabilized by $C(s)$.
+
+\textbf{Both problems can be formulated as a search over stable $Q(s)$.}
+
+\vspace{3ex}
+
+\begin{enumerate}
+\item \textbf{Formulation}
+
+\mportant{$y=Gu+He\rightarrow Dy=Nu+Fe$}
+
+where $e\in\mathcal{N}(0,1)$ and $D,N,F$ stable. Now find $D,N$ and possibly $F$ from the data, knowing $C_0=X_0/Y_0$.
+
+\item \textbf{Parametrization with $R$ and $F$}
+
+\mportant{$G_R=\frac{N}{D}=\frac{N_0+RY_0}{D_0-RX_0}$ $R$ is stable}
+
+\mportant{$H_{R,F}=\frac{F}{D}=\frac{F}{D_0-RX_0}$ $F$ is stable and stably invertible}
+\item \textbf{Equivalent open-loop ID experiment:}
+
+\mportant{$(D_0-RX_0)y=(N_0+RY_0)u+Fe$}
+
+and rearranging
+
+\mportant{$\underbrace{D_0y-N_0u}_{=:\beta}=R\underbrace{(X_0y+Y_0u)}_{=:\alpha}+Fe$}
+
+Open-loop system: $\beta = R\alpha + Fe$ with $R$ and $F$ stable.
+\end{enumerate}
+
+\myspic{0.7}{DualYoula}
+
+\begin{itemize}
+\item The transfer function from $\beta$ to $\alpha$ is zero. Thus the system is actually open loop! No feedback! 
+\end{itemize}
+
+\myspic{0.7}{YoulaOpenLoop}
+
+\begin{align*}
+\beta&=D_0y-N_0u \text{ (filtered input and output signals)}\\
+\alpha&=X_0y+Y_0u\\
+&=X_0y+Y_0\left(r_2+\frac{X_0}{Y_0}(r_1-y)\right)=X_0y+Y_0\left(r-\frac{X_0}{Y_0}y\right)\\
+&=Y_0r\text{ (filtered excitation signal)}
+\end{align*}
+
+\subsubsection{Summary}
+
+\begin{enumerate}
+\item Factorise: $C_0=X_0/Y_0$.
+\item Choose excitation: $r$ (Note $\alpha = Y_0r$ filtering).
+\item Run closed-loop experiments with $C_0$, measuring $y$ and $u$.
+\item Choose an initial model, $P_0=N_0/D_0$ (must be stabilised by $C_0$).
+\item Filter measurements, $\beta =D_0y-N_0u$ (time or frequency domain).
+\item Filter excitation, $\alpha = Y_0r$.
+\item Esimate $\hat{R}$ (and $\hat{F}$) from $\beta = R\alpha + Fe$.
+\item Calculate plan estimate, $\hat{G}=(N_0+\hat{R}Y_0)/(D_0-\hat{R}X_0)$.
+\end{enumerate}
+
+\section{Time-Domain Correlation Methods}
+
+\subsection{Parametrised Model Sets}
+
+We are looking for the plant, $G$, in a parametrised set
+
+\mportant{$\{G(\theta)\}$} 
+
+where $\theta \in\mathbb{R}^d$ is the parameter vector.
+
+\begin{center}
+\begin{tabular}{ll}
+Model structure&Parameter vector $\theta\in\mathbb{R}^d$\\
+Pulse response: $g(k)$&$\begin{bmatrix}g(0)&g(1)&\ldots\end{bmatrix}$\\
+Transfer function: $\frac{B(z)}{A(z)}$&$\begin{bmatrix} a_1&\ldots&b_1&\ldots\end{bmatrix}$\\
+State-space: $\left[\begin{tabular} {c|c} A & B\\ \hline  C & D\end{tabular}\right]$&$\begin{bmatrix}A_{ij}&\ldots&B_{ij}&\ldots&C_{ij}\ldots&D_{ij}&\ldots\end{bmatrix}$
+\end{tabular}
+\end{center}
+
+\subsection{Identification Framework}
+
+\mportname{Measurement data}{$Z_K=\{u(0),y(0),\ldots,u(K-1),y(K-1)\}$}
+
+\mportname{Objective}{$J(\theta,Z_K)$}
+
+\mportname{General optimization formulation}{$\hat{\theta}=\text{arg min}J(\theta,Z_K)$}
+
+\subsubsection{Possible Objectives}
+
+\textbf{Residual error objectives:}
+
+\mportname{error}{$e(k,\theta) = y(k)-G(\theta)u(k)$}
+
+\mportant{$J(\theta) = ||e(\theta)||^2_2$ or $||e(\theta)||_\infty$ or $||e(\theta)||_1$}
+
+\textbf{Parametric error objective:}
+
+\mportant{$J(\theta)=||\theta-\theta_0||_2$ or $E\{\theta-\theta_0\}$}
+
+\textbf{Prediction error objective:}
+
+\mportant{$J(\theta)=E\{y(k+1)-\hat{y}(k+1,\theta|k)\}$}
+
+\subsection{Correlation-Based Methods}
+
+\textbf{Input-Output relationship:}
+
+\mportant{$y(k)=\sum\limits_{i=0}^\infty g(i)u(k-i)+v(k)$}
+
+\important{$R_{yu}(\tau)=g(k)\ast R_u(\tau)$}
+
+This can be written in matrix form (Toeplitz):
+
+\mportant{$\begin{bmatrix}
+R_{yu}(0)\\R_{yu}(1)\\R_{yu}(2)\\\vdots
+\end{bmatrix}=\begin{bmatrix}
+R_u(0)&R_u(-1)&R_u(-2)&\cdots\\
+R_u(1)&R_u(0)&R_u(-1)&\\
+R_u(2)&R_u(1)&\ddots&\ddots\\
+\vdots&&\ddots&\ddots
+\end{bmatrix}\begin{bmatrix}
+g(0)\\g(1)\\g(2)\\\vdots
+\end{bmatrix}$}
+
+Having only a finite data estimate:
+
+\mportant{$\underbrace{\begin{bmatrix}
+\hat{R}_{yu}(0)\\\vdots\\\hat{R}_{yu}(N-1)
+\end{bmatrix}}_{\hat{R}_{yu}}=\underbrace{\begin{bmatrix}
+\hat{R}_u(0)&\cdots&\hat{R}_u(-(N-1))\\
+\vdots&&\vdots\\
+\hat{R}_{yu}(N-1)&\cdots&\hat{R}_u(0)
+\end{bmatrix}}_{\bar{R}_N}\begin{bmatrix}
+\hat{g}(0)\\\vdots\\\hat{g}(N-1)
+\end{bmatrix}$}
+
+\begin{itemize}
+\item Note that $R_u(-\tau)=R_u(\tau)$.
+\item In the periodic (noise-free) and FIR case this is exact.
+\item $\hat{g}$ is uniquely determined, if $\bar{R}_N$ is invertible, which is given if $u(k)$ is persistently exciting.
+\end{itemize}
+
+\subsection{Persistency of Excitation}
+
+A stationary input $u(k)$ is persistently exciting of order $n$ if
+
+\mportant{$\bar{R}_n=\begin{bmatrix}
+R_u(0)&\cdots&R_u(-(n-1))\\\vdots&&\vdots\\ R_u(n-1)&\cdots&R_u(0)
+\end{bmatrix}$}
+
+is positive definite.
+
+\begin{itemize}
+\item This is sufficient to uniquely determine the first $n$ coefficients of the pulse response, $\hat{g}k)$ via the correlation approach.
+\item The definition also applies to deterministic signals.
+\item A signal is called \textbf{persistently exciting} if this holds for all $n$
+\end{itemize}
+
+\textbf{Spectra of persistently exciting signals}
+
+$u(k)$ is persistently exciting of order $n$ if $\phi_u\ejo\neq 0$ for at least $n$ frequencies.
+
+\textbf{Moving average (MA) filtering}
+
+\mportname{$n^{th}$ order MA filter}{$M_n(z)=m_1z^{-1}+\cdots + m_nz^{-n}$}
+
+If for all $n^{th}$ order MA filters,
+
+\mportant{$|M_n\ejo|^2\phi(u)\ejo = 0\Rightarrow M\ejo = 0$}
+
+then $u(k)$ is persistently exciting of order at least $n$.
+
+\begin{itemize}
+\item A step function is persistently exciting of order $1$.
+\item A $PRBS$ signal is persistently exciting of order $M$.
+\item A sum of sinusoids $u(k)=\sum\limits_{s=1}^S\alpha_s\cos(\omega_s k+\phi_s)$ is persistently exciting of order.
+\end{itemize}
+
+\mportant{$\begin{cases} 2S&\text{ if } 0<\omega_s<\pi,\ s=1,\ldots,S\\2S-1&\text{ if }\omega = 0\text{ or }\omega=\pi\in\{\omega_s,s=1,\ldots,S\}\\
+2S-2&\text{ if }\omega = 0\text{ and } \omega =\pi\in\{\omega_s,s=1,\ldots,S\}\end{cases}$}
+
+\subsection{Autoregressive moving average models}
+
+Model form:
+
+\mportant{$G(z)=\frac{b_1z^{-1}+\ldots+b_mz^{-m}}{1+a_1z^{-1}+\ldots+a_nz^{-n}}$}
+
+Input-Output relationship:
+
+\begin{align*}
+y(k)&=G(z)u(k)\\
+&=-a_1y(k-1)-\cdots-a_ny(k-n)+b_1u(k-1)+\cdots+b_mu(k-m)\\
+&=\phi^T(k)\theta
+\end{align*}
+
+where 
+
+\begin{align*}
+\phi(k)&=\begin{bmatrix}
+-y(k-1)&\cdots&-y(k-n)&u(k-1)&\cdots&u(k-m)
+\end{bmatrix}^T\\
+\theta&=\begin{bmatrix}
+a_1&\cdots&a_n&b_1&\cdots&b_m
+\end{bmatrix}^T
+\end{align*}
+
+where $\phi(k)$ is called the \textbf{regressor vector} and $\theta$ is called the \textbf{parameter vector}.
+
+\subsubsection{ARX or ARMAX}
+
+Consider $y(k)=\phi^T(k)\theta$ for $k=0,\ldots, N-1$
+
+\mportant{$\underbrace{\begin{bmatrix}
+y(0)\\\cdots\\y(N-1)
+\end{bmatrix}}_Y=\underbrace{\begin{bmatrix}
+\phi^T(0)\\\cdots\\\phi^T(N-1)
+\end{bmatrix}}_\Phi\theta$}
+
+or in matrix form: $Y = \Phi\theta$
+
+\textbf{Least squares solution:}
+
+\mportant{$\hat{\theta}=\left(\Phi^T\Phi\right)^{-1}\Phi^TY$}
+
+\begin{TPMatlab}
+Theta = Phi\Y;
+\end{TPMatlab}
+
+The least squares solution $\hat{\theta}$ solves the problem:
+
+\begin{align*}
+\underset{\theta}{minimise} ||\epsilon||_2\\
+\text{subject to} Y=\Phi\theta +\epsilon
+\end{align*}
+
+Thus the cost function is defined as
+
+\mportant{$J(\theta,Z_N)=||Y-\Phi\theta||_2=||\epsilon||_2$}
+
+\subsubsection{Statistical Properties of the LS Estimate}
+
+\mportname{Model}{$Y=\Phi\theta+\epsilon,\quad\epsilon=\begin{bmatrix}
+\epsilon(0)\\\vdots\\\epsilon(N-1)
+\end{bmatrix}$}
+
+Error assumptions: $E\{e\} = 0$ and $E\{\epsilon\epsilon^T\} = \sigma^2 I$.
+
+\important{$E\{\hat{\theta}\}=\theta$ (unbiased estimator)}
+
+\important{cov$\{\theta\} = E\{(\hat{\theta}-\theta)(\hat{\theta}-\theta)^T\}=\sigma^2(\Phi^T\Phi)^{-1}$}
+
+\textbf{For a model with correlated noise:}
+
+\mportant{$E\{\epsilon\epsilon^T\} = R$}
+
+\important{$E\{\hat{\theta}\}=\theta$ (unbiased estimator)}
+
+\important{cov$\{\theta\} = E\{(\hat{\theta}-\theta)(\hat{\theta}-\theta)^T\}=(\Phi^T\Phi)^{-1}\Phi^TR\Phi(\Phi^T\Phi)^{-1}$}
+
+Thus the variance of the error depends on the observations $\Phi$!
+
+\subsection{Best linear unbiased estimator (BLUE or Markov estimator)}
+
+\textbf{For a model with correlated noise:}
+
+\mportant{$E\{\epsilon\epsilon^T\} = R$}
+
+Best linear estimator:
+
+\mportant{$\hat{\theta} = Z^TY$ where $Z=R^{-1}\Phi(\Phi^TR^{-1}\Phi)^{-1}$}
+
+satisfies:
+
+\important{$E\{\hat{\theta}\}=\theta$ (unbiased estimator)}
+
+
+\important{cov$\{\hat{\theta}_Z\} = (\Phi^TR{-1}\Phi)^{-1}\leq$cov$\{\hat{\theta}\}$ for any unbiased estimate}
+
+\begin{itemize}
+\item BLUE requires knowledge of the error covariance, $R$, in order to reduce the variance of the error of the estimation.
+\end{itemize}
+
+\subsection{Pitfall of Noisy Case}
+
+\myspic{0.7}{ExperimentalSetupNoiseFree}
+
+The setup above is only valid for the noise-free case.
+As soon as there is noise the equation derived from the setup above delivers biased results.
+
+\vspace{3ex}
+
+In actuality the problem can only be solved as a linear least squares problem if the setup can be described like this:
+
+\myspic{0.7}{ExperimentalSetupNoisy}
+
+If this is not the case we get biased results. A possible remedy would be:
+
+\begin{enumerate}
+\item Assume the system to be of the form:
+
+\begin{equation*}
+\begin{bmatrix}
+y(0)\\\vdots\\y(N-1)
+\end{bmatrix}=\begin{bmatrix}
+\phi^T(0)\\
+\vdots\\
+\phi^T(N-1)
+\end{bmatrix}\theta+\begin{bmatrix}
+v(0)\\
+\vdots
+v(N-1)
+\end{bmatrix}
+\end{equation*}
+
+where $\phi^T(k)=\begin{bmatrix}
+-y(k-1)&\cdots&-y(k-N)&u(k-1)&\cdots&u(k-m)
+\end{bmatrix}1\begin{bmatrix}
+-v(k-1)&\cdots -v(k-N)&0&\cdot&0
+\end{bmatrix}$
+
+\item Assume zero noise influence in the regressor $\phi(k)$.
+\item Solve with linear least squares.
+\item Calculate the $\hat{V} = Y-\Phi\hat{\theta}$ as the residuals.
+\item Recalculate taking into account the estimate of the noise $\hat{v}(k)$.
+\item Repeat.
+\end{enumerate}
 
 \section{Prediction Error Methods}
 
+
+Given $Z_K=\{u(0),y(0),\ldots,u(K-1),y(K-1)\}$ what is the best estimate of $y(K)$?
+
+Typical assumptions
+\begin{itemize}
+\item $G(z)$ and $H(z)$ stable.
+\item $H(z)$ is stably invertible (no zeros outside the unit disk).
+
+
+Given $v(k),\ k=0,\ldots,K-1$ can we determine $e(k)$?
+
+\mportname{Inverse filter}{$H_{inv}(z):\quad e8k)=\sum\limits_{i=0}^\infty h_{inv}(i)v(k-i)$}
+
+Note that the inverse filter has to be causal: $h_{inv}(k)=0,k<0$ and stable: $\sum\limits_{k=0}^\infty|h_{inv}(k)|<\infty$.
+
+If $H(z)$ has no zeros for $|z|\geq 1$ then $H_{inv}(z)=\frac{1}{H(z)}$.
+
+\item $e(k)$ has known statistics.
+\end{itemize}
+
+\subsection{One step ahead prediction}
+
+Assume $H(z)$ is known, $H(z)$ monic ($h(0) = 1$).
+
+\begin{align*}
+v(k)&=\sum\limits_{i=0}^\infty h(i)e(k-i)\\
+&= \underbrace{e}_{h(0)v(k)}(k)+\underbrace{\sum\limits_{i=1}^{\infty}h(i)e(k-i)}_{=m(k-1)\text{ \glqq observed\grqq}}
+\end{align*}
+
+The above simplification of $h(0)v(k) = e(k)$ only applies if $H(z)$ is monic, i.e. $h(0) = 1$.
+
+\mportname{Prediction based on measurement}{$\hat{v}(k|k-1)$}
+
+which leads to
+
+\mportant{$\hat{v}(k|k-1)=m(k-1)=\sum\limits_{i=1}^{\infty}h(i)e(k-i)$}
+
+The error in this prediction is then $e(k)$ which cannot be reduced.
+
+\vspace{3ex}
+
+In general:
+
+\mportant{Prob$\{x\leq e(k)\leq x+\delta x\}=\int_{x}^{x+\delta x}f_e(x)dx\approx f_e(x)\delta x$}
+
+\mportant{Prob$\{x\leq v(k)\leq x+\delta x|v_{-\infty}^{k-1}\}\leq f_e(x-m(k-1))\delta x$}
+
+which is equivalent to a shift of the distribution with $m(k-1)$. The expected value, the mean or the most likely value (which is not the same for an asymmetric distribution) of the shifted distribution would be a valid choice for $\hat{v}(k|k-1)$.
+
+\important{$\hat{v}(k|k-1)=m(k-1)=\sum\limits_{i=1}^{\infty}h(i)e(k-i)=-\sum\limits_{i=1}^{\infty}h_{inv}(i)v(k-i)\approx -\sum\limits_{i=1}^{k}h_{inv}(i)v(k-i) $}
+
+\subsubsection{Moving Average Model}
+
+\begin{align*}
+v(k)&=e(k)+ce(k-1)\Rightarrow H(z) = 1+cz^{-1}\\
+H_{inv}(z) &=\frac{1}{1+cz^{-1}}=\sum\limits_{i=0}^\infty (-c)^iz^{-i}
+\end{align*}
+
+where $|c|<1$ for stable invertibility.
+
+\important{$\hat{v}(k|k-1)=cv(k-1)-c^2v(k-2)+c^3v(k-3)+\cdots+-(-c)^kv(0)$}
+
+Written recursively:
+
+\begin{align*}
+H(z)\hat{v}(k|k-1)&=(H(z)-1)v(k)\\
+\hat{v}(k|k-1)+c\hat{v}(k-1|k-2)&=cv(k-1)\\
+\hat{v}(k|k-1)&=c\underbrace{(v(k-1)-\hat{v}(k-1|k-2))}_{\epsilon(k-1)}\\
+&=c\epsilon(k-1)
+\end{align*}
+
+\subsubsection{Autoregressive Noise Model}
+
+\begin{align*}
+v(k)&=\sum\limits_{i=0}^\infty a^i e(k-i)\quad |a|<1 \text{ for stablity}\\
+H(z)&=\sum\limits_{i=0}^\infty a^iz^{-i}&=\frac{1}{1-az^{-1}}\\
+H_{inv}(z)&=1-az^{-1}
+\end{align*}
+
+\important{$\hat{v}(k|k-1)=(1-H_{inv}(z))v(k)=av(k-1)$}
+
+\subsection{Output Prediction}
+
+\begin{align*}
+y(k)&=G(z)u(k)+v(k)\\
+\hat{y}(k|k-1)=\expe{y(k)|Z_K}&=G(z)u(k)+\hat{v}(k|k-1)\\
+&=G(z)u(k)+(1-H_{inv}(z))v(k)\\
+&=H_{inv}(z)G(z)u(k)+(1-H_{inv}(z))y(k)
+\end{align*}
+
+Note that the last line is obtained by replacing $v(k) = y(k) - G(z)u(k)$.
+
+\vspace{3ex}
+
+The prediction error would then be:
+
+\begin{align*}
+y(k)-\hat{y}(k|k-1)&=-H_{inv}(z)G(z)u(k)+H_{inv}(z)y(k)\\
+&=H_{inv}(z)(y(k)-G(z)u(k))=H_{inv}(z)v(k)\\
+&=e(k)
+\end{align*}
+
+The one-step ahead predictor and the prediction error are parametrised by $\theta$. This leads to an optimisation problem:
+
+\begin{align*}
+J(\theta,Z_K)&=\frac{1}{K}\sum\limits_{k=0}^{K-1}l(\epsilon_F(k,\theta))\text{ where typically } l(\epsilon_F(k,\theta))=||\epsilon_F(k,\theta)||_2\\
+\hat{\theta}&=\underset{\theta}{\text{argmin}}J(\theta,Z_K)
+\end{align*}
+
+where $\epsilon_F$ is an optionally filtered error signal.
+
+\subsection{Different Models}
+
+\begin{table}[H]
+\begin{center}
+\begin{tabular}{lll}
+Short name&Property&Example\\
+\hline
+AR&autoregressive&$A(z)y(t)$\\
+X&extra&$B(z)u(t)$\\
+MA&moving average&$C(z)e(t)$\\\hline
+\end{tabular}
+\end{center}
+\caption{Model naming terminology}
+\end{table}
+
+\subsubsection{Equation Error Model Structure: ARX}
+
+\myspic{0.5}{ARX}
+
+\important{$y(t)+a_1y(t-1)+\cdots+a_{n_a}y(t-n_a)=b_1u(t-1)+\cdots+b_{n_b}u(t-n_b)+e(t)$}
+
+\mportant{$\theta=\begin{bmatrix}
+a_1&a_2&\cdots&a_{n_a}&b_1&\cdots&b_{n_b}
+\end{bmatrix}^T$}
+
+\begin{itemize}
+\item[+] The one step ahead predictor directly defines a linear regression.
+\item[-] Lack of adequate freedom in describing the properties of the disturbance term.
+\end{itemize}
+
+\begin{align*}
+\hat{y}(k|\theta)&=H_{inv}(\theta,z)G(\theta,z)u(k)+(1-H_{inv}(\theta,z))y(k)\\
+&=B(z)u(k)+(1-A(z))y(k)\\
+&=\theta^T\phi(k)=\phi^T(k)\theta
+\end{align*}
+
+\importname{$Y-\phi\theta=\epsilon$}{vector of prediction errors}
+
+\begin{itemize}
+\item In this case the smallest error is also the smallest prediction error which is not generally the case.
+\end{itemize}
+
+\subsubsection{Equation error structure: ARMAX}
+
+\myspic{0.5}{ARMAX}
+
+The ARMAX model structure expands the flexibility of the ARX by describing the equation error as a moving average of white noise.
+
+\important{$\begin{matrix}y(t)+a_1y(t-1)+\cdots +a_{n_a}y(t-n_a)=b_1u(t-1)+\\ \cdots + b_{n_b}u(t-n_b)+e(t)+c_1e(t-1)+\cdots+c_{n_c}e(t-n_c)\end{matrix}$}
+
+with $C(z) = 1+c_1z^{-1}+\cdots+c_{n_c}z^{-n_c}$. The whole thing can be written as:
+
+\mportant{$A(z)y(t)=B(z)u(t)+C(z)e(t)$}
+
+\begin{align*}
+\hat{y}(k|\theta)&=\frac{B(z)}{C(z)}u(k)+\left(1-\frac{A(z)}{C(z)}\right)y(k)\\
+C(z)\hat{y}(k|\theta)&=B(z)u(k)+(C(z)-A(z))y(k)\\
+\hat{y}(k|\theta)&=B(z)u(k)+(1-A(z))y(k)+(C(z)-1)\underbrace{(y(k)-\hat{y}(k|\theta))}_{\epsilon(k)}\\
+&=\begin{bmatrix}
+b_1&\cdots&a_1&\cdots&c_1&\cdots
+\end{bmatrix}\\
+&\quad\begin{bmatrix}
+u(k-1)&\cdots&-y(k-1)&\cdots&\epsilon(k-1)&\cdots
+\end{bmatrix}\\
+&=\phi^T(\theta,k)\theta
+\end{align*}
+
+This is not linear in $\theta$, since $\epsilon$ depends on the chosen parametrisation, but is called pseudo-linear.
+
+\textbf{Optimisation:}
+
+\begin{align*}
+\underset{\theta,\epsilon}{\text{minimise}}||\epsilon||_2\quad \text{(or more generally, $l(\epsilon)$)}\\
+\text{subject to }Y=\Phi(\epsilon)^T\theta+\epsilon\quad\text{\textcolor{red}{(nonlinear equality constraint)}}
+\end{align*}
+
+\textbf{Constrained minimisation code for ARMAX}
+
+\begin{align*}
+A(z) &= 1+a_1z^{-1}+a_2z^{-2}\\
+B(z)&= b_1z^{-1}+b_2z^{-2}\\
+C(z)&=1+c_1z^{-1}+c_2z^{-2}\\
+\theta&=\begin{bmatrix}
+b_1&b_2&a_1&a_2&c_1&c_2
+\end{bmatrix}^T
+\end{align*}
+
+\textcolor{red}{Fix code, probably not running!}
+
+\begin{TPMatlab}
+%Create data part of regressor. Assume plant at rest
+PhiTyu(1,:) = [0,0,0,0];
+PhiTyu(2,:) = [u(1),0,-y(1),0];
+for i = 3:K,
+	PhiTyu(i,:) = [u(i-1),u(i-2),-y(i-1),-y(i-2)];
+end
+
+[x,fval] = fmincon(@(x)ARMAXobjective(x),x0,...
+[],[],[],[],[],[],@(x)ARMAXconstraint(x,y,PhiTyu));
+function [f] = ARMAXobjective(x) % x = [theta; e]
+f = sqrt(x(7:end)'*x(7:end));
+function [c,ceq] = ARMAXconstraint(x,y,PhiTyu)
+e = x(7:end);
+PhiTe = zeros(K,2);
+PhiTe(2,1) = e(1);
+for j = 3:K,
+PhiTe(j,:) = [e(j-1), e(j-2)];
+end
+ceq = y - [PhiTyu, PhiTe] * theta - e; c = [];
+\end{TPMatlab}
+
+\subsubsection{Equation error structure: ARARMAX}
+
+Instead of modelling the equation error as a moving average in can also be described as an autoregression, leading to a ARARX structure. A further generalization using an ARMA description of the equation error leads to the ARARMAX structure below:
+
+\myspic{0.5}{ARARMAX}
+
+\begin{align*}
+G(\theta,z)&=\frac{B(\theta,z)}{A(\theta,z)}\\
+H(\theta,z)&=\frac{C(\theta,z)}{A(\theta,z)D(\theta,z)}
+\end{align*}
+
+\subsubsection{Output Error Model Structure}
+
+Contrary to the equation error model structure, this approach parametrizes the transfer functions independently.
+
+\myspic{0.5}{OutputErrorModel}
+
+\important{$\begin{matrix}w(t,\theta)+f_1w(t-1,\theta)+\cdots+f_{n_f}w(t-n_f,\theta)\\=b_1u(t-1)+\cdots+b_{n_b}u(t-n_b)\end{matrix}$}
+
+\begin{align*}
+G(\theta,z)&=\frac{B(\theta,z)}{F(\theta,z)}\\
+H(\theta,z)&=1\\
+\hat{y}(k|\theta)&=\frac{B(\theta,z)}{F(\theta,z)}u(k)=\phi(k,\theta)^T\theta\\
+\theta = \begin{bmatrix}
+b_1&b_2&\cdots&b_{n_b}&f_1&f_2&\cdots&f_{n_f}
+\end{bmatrix}
+\end{align*}
+
+\subsubsection{Box-Jenkins Model Structure}
+
+The Box-Jenkins Model Structure naturally ensues the Output Error, by further modelling the properties of the output error with an ARMA model:
+
+\important{$y(t)=\frac{B(z)}{F(z)}u(t)+\frac{C(z)}{D(z)}e(t)$}
+
+\myspic{0.5}{BoxJenkins}
+
+\begin{align*}
+G(\theta,z)&=\frac{B(\theta,z)}{F(\theta,z)}\\
+H(\theta,z)&=\frac{C(\theta,z)}{D(\theta,z)}\\
+\hat{y}(k|\theta)&=\frac{D(z)}{C(z)}\frac{B(z)}{F(z)}u(k)+(1-\frac{D(z)}{C(z)}y(k)
+\end{align*}
+
+\subsubsection{General Model Structure}
+
+The total of the five transfer functions $A(z), B(z),C(z),D(z),E(z)$ enables a total  
+
+\myspic{0.5}{GeneralModel}
+
+\newcommand{\tz}{(\theta,z)}
+\begin{align*}
+G(\theta,z)&=\frac{B\tz}{A\tz F\tz}\\
+H\tz&=\frac{C\tz}{A\tz D\tz}\\
+\hat{y}(k|\theta)&=\frac{D(z)}{C(z)}\frac{B(z)}{F(z)}u(k)+(1-\frac{D(z)A(z)}{C(z)})y(k)
+\end{align*}
+
+\subsection{Known noise model (with ARMAX dynamics)}
+
+Assume known noise: $v(k)=L(z)e(k)$
+
+Thus
+
+\mportant{$A(z)y(k)=B(z)u(k)+L(z)e(k)$}
+
+\begin{align*}
+y_L(k)=L^{-1}(z)y(k)\\
+u_L(k)=L^{-1}(z)u(k)
+\end{align*}
+
+\mportant{$A(z)y_L(k)=B(z)u_L(k)+e(k)$}
+
+for which least squares gives consistent estimates.
+
+\subsection{High-order model fitting}
+
+Assume an ARARX structure:
+
+\mportant{$A(z)y(k)=B(z)u(k)+\frac{1}{D(z)}e(k)\quad e(k)\sim\mathcal{N}(0,\lambda)$}
+
+Fitting a high order model (order of $D(z)$ is $n_d$)
+
+\mportant{$A(z)D(z)y(k)=B(z)D(z)u(k)+e(k)$}
+
+Least squares estimate with orders $n+n_d$ and $m+n_d$. This gives a consistent estimate of 
+
+\mportant{$\frac{B(z)D(z)}{A(z)D(z)}=\frac{B(z)}{A(z)}$}
+
+This amounts to making the noise model sufficiently rich to capture additional autoregressive features in the noise. In practice though, the cancellation will not be exact. $\hat{A}(z)$ and $\hat{B}(z)$ will be high order.
+
 \section{Parameter estimation statistics}
+
+\subsection{Model description}
+
+As found in chapter 4, Ljung:
+
+\important{$y(t)=G(z,\theta)u(t)+H(z,\theta)e(t),\quad f_e(x,\theta)$}
+
+where $f_e(x,\theta)$ is the PDF of $e(t)$ and $e(t)$ is assumed to be white noise.
+
+\begin{define}
+The \textbf{moments} of a PDF describe generalized concept of expected values:
+
+\mportant{$Ee^{m}=\in x^{m}f_e(x) dx=0$}
+
+where $m$ is a positive integer. For $m=1$, the first moment, is the expected value of a PDF, for $m=2$, the second moment, is the variance of a PDF.
+\end{define}
+
+\subsection{Basic setup}
+
+\mportname{Parametrised model}{$G=G(\theta,z),\quad H=H(\theta,z)$}
+
+\mportname{Estimation}{$\hat{\theta}=\underset{\theta}{\text{argmin}}J(\theta,Z_K)$}
+
+Consider $K$ observations. Each is a realisation of a random variable, with joint probability distribution
+
+\mportant{$f(x_1,\ldots,x_K|\theta)$}
+
+For independent variables
+
+\mportant{$f(x_1,\ldots,x_K;\theta)=f_1(x_1;\theta)f_2(x_2;\theta)\cdots f_K(x_K;\theta)=\prod\limits_{i=1}^nf_i(x_i;\theta)$}
+
+Substituting the observation $Z_K$ gives a function of $\theta$
+
+\mportname{Likelihood function}{$\mathcal{L}(\theta)=\left.f(x_1,\ldots,x_k;\theta)\right|_{x_i=z_i,i=1,\ldots,K}$}
+
+\mportname{Maximum likelihood estimator}{$\hat{\theta}_{ML}=\underset{\theta}{\text{argmax}}\mathcal{L}(\theta)$}
+
+The log-likelihood is often mathematically easier to consider
+
+\mportant{$\hat{\theta}_{ML}=\underset{\theta}{\text{argmax}}\ln\mathcal{L}(\theta)$}
+
+It will give the same $\hat{\theta}$ since $\ln$ is monotonic.
+
+\subsection{Bayesian approach}
+
+Consider $\theta$ to be a random variable with pdf: $f_\theta(x)$, where $x_i = z_i$. This is an \textbf{a priori} distribution assumed before the experiment. Thus we have some knowledge about the variable that is to be estimated.
+
+\mportname{Conditional Probability}{$\prob{\theta|z_1,\ldots,z_K} = \frac{\prob{Z_K\cap\theta}}{\prob{Z_K}}$}
+
+\mportname{Since $\theta$ is not independent from $Z_K$}{$\prob{Z_K\cap\theta}= \prob{Z_K|\theta}\prob{\theta}$}
+
+which combined results in
+
+\importname{Bayes' Theorem}{$\prob{\theta|z_1,\ldots,z_K}=\frac{\prob{Z_K|\theta}\prob{\theta}}{\prob{Z_K}}$}
+
+where $\prob{\theta}$ contains the prior knowledge.
+
+So
+
+\important{$\underset{\theta}{\text{argmax}}\ f(\theta|z_1,\ldots,z_K)=\underset{\theta}{\text{argmax}}\ f(Z_K|\theta)f_\theta(\theta)$}
+
+where $f_\theta(\theta)$ weights the maximum likelihood estimator towards the expected/most realistic value.
+
+\subsection{Maximum a posteriori (MAP) estimation}
+
+The MAP is closely related to ML estimation but in addition employs an augmented optimization objective which incorporates a prior distribution that quantifies the additionally available information on the estimated quantity.
+
+Given the data $Z_K$
+
+\mportant{$\hat{\theta}_{MAP}=\underset{\theta}{\text{argmax}}\ f(Z_K|\theta)f_\theta(\theta)$}
+
+The maximum likelihood estimator can be interpreted as:
+
+\begin{align*}
+\theta_{ML}&=\left.\underset{\theta}{\text{argmax}}f(x_1,\ldots,x_K|\theta)\right|_{x_i=z_i,i=1,\ldots,K}\\
+&=\underset{\theta}{\text{argmax}}f(Z_K|\theta)
+\end{align*}
+
+This estimate coincides with the simple maximum likelihood estimate if $\theta$ is assumed to be uniformly distributed.
+
+\subsection{Cramér-Rao bound}
+
+The Cramér-Rao bound expresses a lower bound on the variance of unbiased estimators of a deterministic (fixed, though unknown) parameter.
+
+\mportname{Mean-square error matrix}{$P=\expe{(\hat{\theta}(Z_K)-\theta_0)(\hat{\theta}(Z_K)-\theta_0)^T}$}
+
+Assume $\expe{\hat{\theta}(Z_K)}=\theta_0$ and $Z_K\subset\mathcal{R}^K$. Then $P\geq M^{-1}$ where $M$ is the \textbf{Fischer information Matrix}
+
+\begin{align*}
+M&=\left.\expe{(\frac{d}{d\theta}\ln f(Z_K|\theta))(\frac{d}{d\theta}\ln f(Z_K|\theta)^T}\right|_{\theta=\theta_0}\\
+&=-\left.\expe{\frac{d^2}{d\theta^2}\ln f(Z_K|\theta)}\right|_{\theta=\theta_0}
+\end{align*}
+
+Consider a parametrised family of pdfs $f(x_1,\ldots,x_K|\theta)=\prod\limits_{i=1}^Kf_i(x_i|\theta)$
+
+Then
+
+\mportant{$\lim\limits_{K\rightarrow\infty}\hat{\theta}_{ML}\overset{w.p.\ 1}{\longrightarrow}\theta_0$}
+
+and 
+
+\mportant{$\lim\limits_{K\rightarrow\infty}\sqrt{K}(\hat{\theta}_{ML}(Z_K)-\theta_0)\sim\mathcal{N}(0,M^{-1})$}
+
+\subsection{Prediction error statistics}
+
+The prediction error framework is set up as follows:
+
+\mportant{$\epsilon(k,\theta)=y(k)-\hat{y}(k,\theta)$}
+
+where the error $\epsilon(k,\theta)$ is assumed to be independent and identically distributed variables with pfd $f_e(x;\theta)$.
+
+The joint pdf writes as
+
+\mportant{$f(X_K;\theta)=\prod\limits_{k=1}^Kf_e(\epsilon(k,\theta);\theta)$}
+
+\newcommand{\targmax}{\underset{\theta}{\text{argmax }}}
+\begin{align*}
+\hat{\theta}_{ML}&=\targmax f(X_K;\theta)|_{X_K=Z_K}\\
+&=\targmax \mathcal{L}(\theta)\\
+&=\targmax \ln f(Z_K|\theta)\\
+&=\targmax\frac{1}{K}\sum\limits_{k=1}^K\ln f_e(\epsilon(k,\theta);\theta)
+\end{align*}
+
+The prediction error methods give the same estimate if the prediction error cost function is chosen as
+
+\mportant{$l(\epsilon,\theta)=-\ln f_\epsilon(\epsilon|\theta)$}
+
+Thus
+
+\important{$\hat{\theta}_{PE}=\underset{\theta}{\text{argmin }}\frac{1}{K}\sum\limits_{k=1}^K l(\epsilon(k,\theta);\theta)=\hat{\theta}_{ML}$}
+
+\subsection{Linear regression statistics}
+
+One-step ahead predictor
+
+\mportant{$\hat{y}(k|\theta)=\phi^T(k)\theta+\mu(k)$}
+
+In the ARX case $\mu(k)=e(k)$, in other cases $\mu(k)$ can depend on $Z_K$.
+
+\mportant{$\epsilon(k)=y(k)-\phi^t(k)\theta$}
+
+A typical cost function is:
+
+\mportant{$J(\theta,Z_K)=\frac{1}{K}\sum\limits_{k=0}^{K-1}\frac{\epsilon(k)^2}{2}$}
+
+Least-squares criterion:
+
+\mportant{$\hat{\theta}_{LS}=\underbrace{\left(\frac{1}{K}\sum\limits_{k=0}^{K-1}\phi(k)\phi^T(k)\right)^{-1}}_ {R_K^{-1}\in\mathbb{R}^{d\times d}}\underbrace{\frac{1}{K}\sum\limits_{k=0}^{K-1}\phi(k)y(k)}_{f_K\in\mathcal{R}^d}$}
+
+Asymptotic bias:
+
+\mportant{$\lim\limits_{K\rightarrow\infty}\hat{\theta}_{LS}-\theta_0=\lim\limits_{K\rightarrow\infty}R_K^{-1}\frac{1}{K}\sum\limits_{k=0}^{K-1}\phi^T(k)v(k)=(R^\ast)^{-1}f^\ast$}
+
+\mportant{$R^\ast=\expe{\phi(k)\phi^T(k)},\quad f^\ast=\expe{\phi(k)v(k)}$}
+
+Under the assumption that $\lim\limits_{K\rightarrow\infty}\hat{\theta}_{LS}=\theta_0$ we require $(R^\ast)^{-1}f^\ast=0$
+
+So
+
+\begin{enumerate}
+\item $R^\ast$ must be non-singular. Persistency of excitation requirement.
+\item $f^\ast=\expe{\phi(k)v(k)}=0$ This happens if either
+\begin{enumerate}
+\item $v(k)$ is zero mean and independent of $\phi(k)$
+\item $u(k)$ is independent of $v(k)$ and $G$ is FIR ($n=0$)
+\end{enumerate}
+\end{enumerate}
+
+This gives
+
+\mportant{$\lim\limits_{K\rightarrow\infty}\sqrt{K}(\hat{\theta}_{LS}-\theta_0)\sim\mathcal{N}(0,\sigma_0^2(R^\ast)^{-1})$}
+
+\subsection{Correlation methods}
+
+Ideally the sequence of prediction errors is white. Thus the prediction errors are uncorrelated with the data.
+
+
+\textbf{Approach:}
+\begin{enumerate}
+\item Select a sequence $\zeta(k)$, derived from the past data $Z_K$
+\item Require that the error $\epsilon(k,\theta)$ is uncorrelated with $\zeta(k)$
+\mportant{$\frac{1}{K}\sum\limits_{k=0}^{K-1}\zeta(k)\epsilon(k,\theta)=0$ could also use $\alpha(\epsilon)$}
+\item The ID problem can be then viewed as finding $\theta$ such that this relationship is satisfied
+
+The values $\zeta(k)$ are known as \textbf{instruments}.
+
+Typically $\zeta(k)\in\mathbb{R}^{d\times n_y}$ where $\theta\in\mathbb{R}^d$ and $y(k)\in\mathcal{R}^{n_y}$.
+\end{enumerate}
+
+\textbf{Procedure:}
+\begin{enumerate}
+\item Choose a linear fitter for the prediction errors
+
+\mportant{$\epsilon_F(k,\theta)=F(z)\epsilon(k,\theta)$}
+
+\item Choose a sequence of correlation vectors $\zeta(k,Z_K,\theta)$ constructed from the data
+\item Choose a function $\alpha(\epsilon)$ (default is $\alpha(\epsilon)=\epsilon)$ Then
+
+\mportant{$\hat{\theta}=\theta$ solving $f_K(\theta,Z_K)=\frac{1}{K}\sum\limits_{k=0}^{K-1}\zeta(k,\theta)\alpha(\epsilon(k,\theta))=0$}
+\end{enumerate}
+
+\subsubsection{Pseudo-Linear Regressions}
+
+For ARX, ARMAX, etc., model structures we can write the predictor
+
+\mportant{$\hat{y}(k|\theta)=\phi^T(k,\theta)\theta$}
+
+This can be solved via LS methods, but alternatively correlation based solutions can be found:
+
+\important{$\hat{\theta}_{PLR}=\theta$ solving $\frac{1}{K}\sum\limits_{k=0}^{K-1}\phi(k,\theta)\underbrace{(y(k)-\phi^T(k,\theta)\theta)}_{\text{prediction error}}=0$}
+
+The prediction errors are orthogonal to the regressor, $\phi(k,\theta)$.
+
+\subsection{Instrumental Variable Methods}
+
+\mportant{$\hat{\theta}_{IV}=\theta$ solving $\frac{1}{K}\sum\limits_{k=0}^{K-1}\zeta(k,\theta)(y(k)-\phi^T(k,\theta)\theta)=0$}
+
+This is solved by
+
+\mportant{$\hat{\theta}_{IV}=\left(\frac{1}{K}\sum\limits_{k=0}^{K-1}\zeta(k)\phi^T(k)\right)^{-1}\frac{1}{K}\sum\limits_{k=0}^{K-1}\zeta(k)y(k)$}
+
+For consistency we require
+
+\mportname{to be nonsingular}{$\expe{\zeta(k)\phi^T(k)}$}
+
+and 
+
+\mportname{(uncorrelated w.r.t. prediction error)}{$\expe{\zeta(k)v(k)}=0$}
+
+\myspic{0.5}{InstrumentalVariables}
+
+\begin{enumerate}
+\item Estimate $\hat{\theta}_{LS}$ via linear regression.
+\item Select $Q(z)=\hat{A}_{LS}$ and $P(z)=\hat{B}_{LS}$, since the procedure works well when $P$ and $Q$ are close to $B$ and $A$.
+\item Calculate $\hat{\theta}_{IV}$
+\end{enumerate}
+
+\begin{itemize}
+\item Variance and MSE depend on the choice of instruments.
+\item Consistency (asymptotically unbiased) is lost if:
+\begin{itemize}
+\item Noise and instruments are correlated (for example, in closed-loop generating instruments from $u$)
+\item Model order selection is incorrect.
+\item Filter dynamics cancel plant dynamics.
+\item True system is not in the model set.
+\end{itemize}
+\item Closed-loop approaches: generate instruments from the excitation $r$.
+\end{itemize}
 
 \section{Nomenclature}
 
@@ -1555,6 +2628,6 @@ ADC&analog digital converter&\\
 
 \subsection{Transfer Function Estimation}
 
-fill in coolness chart
+\includegraphics[width=\linewidth]{Pictures/Open-loopETFE.pdf}
 
 \end{document}
