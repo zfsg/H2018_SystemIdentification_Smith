@@ -2065,12 +2065,19 @@ where $\epsilon_F$ is an optionally filtered error signal.
 
 \begin{table}[H]
 \begin{center}
-\begin{tabular}{lll}
-Short name&Property&Example\\
+\begin{tabular}{ll}
+Polynomials used&Name of the Model Structure\\
 \hline
-AR&autoregressive&$A(z)y(t)$\\
-X&extra&$B(z)u(t)$\\
-MA&moving average&$C(z)e(t)$\\\hline
+B&FIR\\
+AB&ARX\\
+ABC&ARMAX\\
+AC&ARMA\\
+ABD&ARARX\\
+ABCD&ARARMAX\\
+BF&OE (output error)\\
+BFCD&BJ (Box Jenkins)\\
+ABCDF&General Model\\
+\hline
 \end{tabular}
 \end{center}
 \caption{Model naming terminology}
@@ -2080,7 +2087,7 @@ MA&moving average&$C(z)e(t)$\\\hline
 
 \myspic{0.5}{ARX}
 
-\important{$y(t)+a_1y(t-1)+\cdots+a_{n_a}y(t-n_a)=b_1u(t-1)+\cdots+b_{n_b}u(t-n_b)+e(t)$}
+\important{$y(k)+a_1y(k-1)+\cdots+a_{n_a}y(k-n_a)=b_1u(k-1)+\cdots+b_{n_b}u(k-n_b)+e(k)$}
 
 \mportant{$\theta=\begin{bmatrix}
 a_1&a_2&\cdots&a_{n_a}&b_1&\cdots&b_{n_b}
@@ -2109,7 +2116,7 @@ a_1&a_2&\cdots&a_{n_a}&b_1&\cdots&b_{n_b}
 
 The ARMAX model structure expands the flexibility of the ARX by describing the equation error as a moving average of white noise.
 
-\important{$\begin{matrix}y(t)+a_1y(t-1)+\cdots +a_{n_a}y(t-n_a)=b_1u(t-1)+\\ \cdots + b_{n_b}u(t-n_b)+e(t)+c_1e(t-1)+\cdots+c_{n_c}e(t-n_c)\end{matrix}$}
+\important{$\begin{matrix}y(k)+a_1y(k-1)+\cdots +a_{n_a}y(k-n_a)=b_1u(k-1)+\\ \cdots + b_{n_b}u(k-n_b)+e(k)+c_1e(k-1)+\cdots+c_{n_c}e(k-n_c)\end{matrix}$}
 
 with $C(z) = 1+c_1z^{-1}+\cdots+c_{n_c}z^{-n_c}$. The whole thing can be written as:
 
@@ -2211,7 +2218,7 @@ The Box-Jenkins Model Structure naturally ensues the Output Error, by further mo
 \begin{align*}
 G(\theta,z)&=\frac{B(\theta,z)}{F(\theta,z)}\\
 H(\theta,z)&=\frac{C(\theta,z)}{D(\theta,z)}\\
-\hat{y}(k|\theta)&=\frac{D(z)}{C(z)}\frac{B(z)}{F(z)}u(k)+(1-\frac{D(z)}{C(z)}y(k)
+\hat{y}(k|\theta)&=\frac{D(z)}{C(z)}\frac{B(z)}{F(z)}u(k)+\left(1-\frac{D(z)}{C(z)}\right)y(k)
 \end{align*}
 
 \subsubsection{General Model Structure}
@@ -2224,8 +2231,29 @@ The total of the five transfer functions $A(z), B(z),C(z),D(z),E(z)$ enables a t
 \begin{align*}
 G(\theta,z)&=\frac{B\tz}{A\tz F\tz}\\
 H\tz&=\frac{C\tz}{A\tz D\tz}\\
-\hat{y}(k|\theta)&=\frac{D(z)}{C(z)}\frac{B(z)}{F(z)}u(k)+(1-\frac{D(z)A(z)}{C(z)})y(k)
+\hat{y}(k|\theta)&=\frac{D(z)}{C(z)}\frac{B(z)}{F(z)}u(k)+\left(1-\frac{D(z)A(z)}{C(z)}\right)y(k)
 \end{align*}
+
+\paragraph{Pseudolinear regression:}
+
+\mportant{$\epsilon(k,\theta) = y(k)-\hat{y}(k|\theta)=\frac{D(z)}{C(z)}\left[A(z)y(k)-\frac{B(z)}{F(z)}u(k)\right]$}
+
+we newly define: $w(k,\theta) = \frac{B(z)}{F(z)}u(k)$ and $v(k,\theta) = A(z)y(t)-w(k,\theta)$, thus
+
+\mportant{$\epsilon(k,\theta) = \frac{D(z)}{C(z)}v(k,\theta)$}
+
+State vector:
+
+\mportant{$\begin{matrix}\phi(k,\theta)=[-y(k-1),\ \cdots,\ -y(k-n_a),\ u(k-1),\ \cdots,\ u(k-n_b)\\
+-w(k-1,\theta),\ \cdots,\ -w(k-n_f,\theta),\ \epsilon(k-1,\theta),\ \cdots,\ \epsilon(k-n_c,\theta)\\
+-v(k-1,\theta),\ \cdots,\ -v(k-n_d,\theta)]
+\end{matrix}^T$}
+
+with parameter vector:
+
+\mportant{$\theta=\begin{bmatrix}
+a_1\ \cdots\ a_{n_a}\ b_1\ \cdots\ b_{n_b}\ f_1\ \cdots\ f_{n_f}\ c_1\ \cdots\ c_{n_c}\ d_1\ \cdots\ d_{n_d}
+\end{bmatrix}^T$}
 
 \subsection{Known noise model (with ARMAX dynamics)}
 
@@ -2283,6 +2311,8 @@ where $m$ is a positive integer. For $m=1$, the first moment, is the expected va
 \mportname{Parametrised model}{$G=G(\theta,z),\quad H=H(\theta,z)$}
 
 \mportname{Estimation}{$\hat{\theta}=\underset{\theta}{\text{argmin}}J(\theta,Z_K)$}
+
+\subsubsection{Maximum Likelihood approach}
 
 Consider $K$ observations. Each is a realisation of a random variable, with joint probability distribution
 
